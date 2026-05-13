@@ -1,0 +1,92 @@
+# Registro de Cambios y Documentación del Proyecto TRABGRAD
+
+Este archivo documenta los cambios realizados en el proyecto y sirve como registro histórico. **Jamás se debe borrar contenido de este archivo**; los errores o características obsoletas se deben ~~tachar~~ y documentar con la corrección abajo.
+
+## [2026-05-12] - Implementación Inicial del Panel de Administración
+
+### Añadido
+- **Diseño del Login**: Se implementó el diseño visual solicitado para la pantalla de inicio de sesión (`/login`), utilizando Tailwind CSS con los colores institucionales (Rojo UNICAES `#c92a2a`) y una tarjeta de demostración con credenciales de prueba.
+- **Estructura del Panel de Administración (`/dashboard/admin`)**:
+  - `layout.tsx`: Creado un Layout específico para el administrador que incluye el Sidebar lateral izquierdo y la barra superior superior, basado en el diseño proporcionado.
+  - `page.tsx` (Dashboard Resumen): Implementación de tarjetas de estadísticas (Total Usuarios, Egresados Activos, Asesores Disponibles, TGs Registrados) y gráficas simuladas por ahora.
+  - `usuarios/page.tsx`: Creada la vista de gestión de usuarios (Tabla CRUD) con columnas para nombre, correo, rol, facultad/carrera, estado, último acceso y botones de acción.
+  - `usuarios/nuevo/page.tsx`: Formulario de creación de usuario (Create User) con secciones de Información Personal y Rol/Adscripción.
+  - `carga-masiva/page.tsx`: Vista dedicada a la carga de datos vía archivos `.csv` para entidades como `carreras.csv`, `Facultades.csv`, `usuarios.csv` y `temas_historicos.csv`.
+
+### Notas Técnicas
+- **Base de Datos (Neon)**: Se detectó que en el archivo `sql1.5.sql` original, `facultad` y `carrera` son campos `VARCHAR`. Sin embargo, el requerimiento de carga masiva incluye archivos CSV con estructura relacional (`Facultades.csv` con `id, nombre...`). Para soportar la carga masiva y un CRUD real de facultades y carreras, el sistema requiere (o requerirá) crear dichas tablas en la base de datos para mantener integridad referencial, o procesar los CSV extrayendo solo los nombres para inyectarlos en los campos `VARCHAR` actuales.
+- **Rutas API**: Se irán construyendo los *endpoints* en `/api/admin/...` para conectar el frontend con PostgreSQL (Neon) permitiendo leer, insertar y actualizar los usuarios.
+
+---
+
+## [2026-05-12] - Integración de Gestión de Usuarios con Base de Datos Real
+
+### Añadido
+- **API Route `GET /api/admin/usuarios`**: Se creó el endpoint necesario para obtener el listado real de usuarios directo desde la tabla `sistema_tg.usuarios` en Neon Database utilizando una consulta SQL cruda. Este endpoint cuenta con seguridad integrada para validar la sesión actual y confirmar que el usuario tiene el rol de `administrador`.
+- **Conexión de Interfaz**: Se actualizó el componente cliente `/dashboard/admin/usuarios/page.tsx` para reemplazar los datos simulados por un `fetch()` asíncrono al nuevo endpoint. La tabla ahora refleja los datos en vivo.
+
+---
+
+## [2026-05-12] - Mejoras de Accesibilidad y Contraste Visual
+
+### Correcciones
+- **Contraste en Formularios y Tablas**: Se solucionaron problemas de legibilidad donde los colores de texto y *placeholders* se mezclaban con el fondo blanco/grisáceo. 
+  - Se oscurecieron los textos en las tablas a tonos `text-gray-700` y `text-gray-600` o superiores, y se aplicaron negritas (`font-bold`, `font-medium`) en áreas críticas como Nombres Completos y Correos.
+  - Los campos de entrada (inputs) de la pantalla "Nuevo Usuario" pasaron de usar `bg-gray-50` a fondos blancos sólidos `bg-white` con bordes definidos `border-gray-300`, y textos/marcadores mucho más contrastantes (`text-gray-900`, `placeholder-gray-500`).
+
+---
+
+## [2026-05-12] - CRUD de Facultades y Carreras
+
+### Añadido
+- **Nuevas Rutas API (`/api/admin/facultades` y `/api/admin/carreras`)**: Se construyeron los endpoints GET y POST para leer y crear Facultades y Carreras en la base de datos Neon. Estos endpoints cuentan con la protección de autenticación (rol de administrador).
+- **Vista de Gestión (`/dashboard/admin/facultades-carreras`)**: Se creó una nueva página interactiva para visualizar las tablas de facultades y carreras lado a lado.
+  - La interfaz permite **crear** rápidamente una facultad con su nombre y código.
+  - Permite **crear** una carrera, vinculándola directamente a una facultad existente (cumpliendo la regla: una carrera pertenece a una facultad).
+  - Incluye manejo de errores amigable en caso de que las tablas en Neon aún no hayan sido creadas (para alertar al usuario).
+- **Navegación Sidebar**: Se agregó el enlace de "Facultades y Carreras" con el icono de un edificio (`Building` de `lucide-react`) en el menú lateral de administrador.
+
+---
+
+## [2026-05-12] - Creación Dinámica de Usuarios y Autocalculo de Facultad
+
+### Modificado
+- **Formulario de Nuevo Usuario (`/dashboard/admin/usuarios/nuevo`)**:
+  - Ahora obtiene dinámicamente la lista real de **Carreras** directamente desde la base de datos (vía `/api/admin/carreras`).
+  - Se eliminó el menú de selección de "Facultad", ya que por reglas de negocio, la facultad se deriva de la carrera escogida.
+  - Se incorporó el nuevo campo **"Carnet"** en el diseño visual del formulario, el cual es opcional pero se envía si se llena.
+- **Ruta API (`POST /api/admin/usuarios`)**:
+  - Añadido soporte para registrar nuevos usuarios con contraseña hasheada (usando `bcryptjs`).
+  - Incluye la lógica inteligente en el backend para que, si el administrador envía un `carrera_id`, el sistema busque automáticamente qué `facultad_id` le corresponde a dicha carrera y guarde ambos identificadores relacionales correctamente en la tabla `usuarios`.
+  - Soporta la nueva columna `carnet` en el Query de inserción.
+
+---
+
+## [2026-05-12] - Funcionalidad Completa del CRUD de Usuarios
+
+### Modificado
+- **Tabla de Gestión de Usuarios (`/dashboard/admin/usuarios`)**:
+  - **Relaciones Visualizadas**: La consulta a base de datos (`GET /api/admin/usuarios`) ahora ejecuta `LEFT JOIN` con las tablas `facultades` y `carreras`. Ya no se muestran datos falsos, sino los nombres reales vinculados a la base de datos de Neon.
+  - **Estado "Activo" Interactivo**: El botón de switch visual en la tabla (color verde/gris) ahora es funcional. Al hacer clic, hace un llamado `PATCH` silencioso para activar/desactivar el usuario en tiempo real en la base de datos.
+  - **Último Acceso Real**: Se configuró para que el valor de la base de datos `ultimo_acceso` se formatee a una fecha legible en español. Si el usuario jamás se ha logueado y el valor es nulo, la tabla indicará *"No ha accedido"* de forma elegante.
+- **Edición de Usuario (`/dashboard/admin/usuarios/[id]/editar`)**:
+  - Creada la nueva vista para editar la información de cualquier usuario registrado.
+  - Recupera la información específica (`GET /api/admin/usuarios/[id]`) y permite modificar Nombre, Correo, Carnet, Rol y cambiarlo de Carrera, actualizando automáticamente su adscripción de Facultad tras guardar.
+  - Al igual que la creación, envía una solicitud `PUT` y captura errores de registros duplicados (correo/carnet).
+
+---
+
+## [2026-05-12] - Rediseño Total de Carga Masiva (CSV Preview)
+
+### Añadido y Modificado
+- **Vista Interactiva de Carga (`/dashboard/admin/carga-masiva`)**:
+  - Se rediseñó el flujo de carga masiva en un proceso guiado de 3 pasos (1. Seleccionar Formato -> 2. Subir Archivo -> 3. Previsualización).
+  - **Columnas Actualizadas**: Las estructuras requeridas para los CSV ahora reflejan los esquemas reales y la nueva normalización relacional:
+    - *Facultades*: `nombre, codigo, activa`
+    - *Carreras*: `nombre, codigo, facultad_id, activa`
+    - *Usuarios*: `nombre_completo, correo, password_hash, rol, activo, estado, rendimiento_pct, proyectos_activos, carnet, carrera_id, facultad_id, carreras_asignadas_json`
+    - *Temas Históricos*: `titulo, asesor_id, coordinador_id, tipo, estado, carrera_id, facultad_id, fecha_envio, fecha_aprobacion, fecha_inicio, fecha_fin`
+  - **Lector de CSV en Navegador (`FileReader`)**: Se implementó una función local en JavaScript que lee el contenido del archivo `.csv` subido por el administrador de forma instantánea.
+  - **Tabla de Previsualización (Preview)**: Antes de tocar la base de datos, el sistema renderiza una tabla con las cabeceras encontradas y los primeros 10 registros del archivo. Esto permite al administrador comprobar que el orden de las columnas es el correcto antes de darle a "Confirmar y Subir a Base de Datos".
+
+*(Los siguientes cambios se añadirán debajo de esta línea)*
