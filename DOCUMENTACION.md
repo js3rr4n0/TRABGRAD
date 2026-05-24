@@ -88,5 +88,43 @@ Este archivo documenta los cambios realizados en el proyecto y sirve como regist
     - *Temas Históricos*: `titulo, asesor_id, coordinador_id, tipo, estado, carrera_id, facultad_id, fecha_envio, fecha_aprobacion, fecha_inicio, fecha_fin`
   - **Lector de CSV en Navegador (`FileReader`)**: Se implementó una función local en JavaScript que lee el contenido del archivo `.csv` subido por el administrador de forma instantánea.
   - **Tabla de Previsualización (Preview)**: Antes de tocar la base de datos, el sistema renderiza una tabla con las cabeceras encontradas y los primeros 10 registros del archivo. Esto permite al administrador comprobar que el orden de las columnas es el correcto antes de darle a "Confirmar y Subir a Base de Datos".
+  - **Validación Estricta de Duplicados en Memoria**: Para evitar fallos y envíos innecesarios de red, el parseador local en el navegador verifica que no existan duplicados dentro del mismo archivo (validando el `codigo` único para Facultades y Carreras, y el `correo` para Usuarios) abortando la carga si encuentra uno e indicando al usuario el identificador duplicado.
 
 *(Los siguientes cambios se añadirán debajo de esta línea)*
+
+---
+
+## [2026-05-24] - Corrección de UI en Carga Masiva
+
+### Modificado
+- **Vista Interactiva de Carga (`/dashboard/admin/carga-masiva`)**:
+  - Se corrigió un problema de *overflow* (desbordamiento visual) en el recuadro informativo de las columnas requeridas (el cuadro azul claro). 
+  - Anteriormente, las columnas largas (como en el archivo `usuarios.csv`) generaban una sola línea de texto continuo sin espacios que sobrepasaba la tarjeta. 
+  - Se implementó un diseño basado en *Tags / Píldoras* (`flex-wrap`). Ahora cada nombre de columna se renderiza individualmente en un pequeño recuadro blanco, envolviéndose automáticamente a la siguiente línea si no hay espacio, brindando una estética mucho más limpia y profesional.
+  - **Panel de Errores de Validación (UX/UI)**: Se eliminó la alerta intrusiva que bloqueaba la carga de archivos cuando había duplicados. Ahora, el sistema procesa el CSV, carga la tabla de previsualización y, si encuentra errores (como duplicados en claves únicas o campos obligatorios vacíos), muestra un **Panel Rojo Detallado** encima de la tabla indicando el número total de errores, la fila exacta y la descripción del problema. El botón de subida se deshabilitará hasta que se suba un archivo corregido.
+
+*(Los siguientes cambios se añadirán debajo de esta línea)*
+
+---
+
+## [2026-05-24] - Módulo de Trabajos de Graduación (TG)
+
+### Añadido
+- **Nueva Vista de Administración (`/dashboard/admin/trabajos-graduacion`)**:
+  - Se incorporó un nuevo apartado en el Sidebar (con icono de `BookOpen`) exclusivo para visualizar todos los Proyectos y Temas Históricos registrados.
+  - **Tabla de Gestión**: Renderiza el título, tipo, estado con *badges* colorizados, fecha de envío y los nombres (no IDs) del Asesor y Coordinador asignado realizando `LEFT JOIN` a la tabla de `usuarios`.
+  - **Eliminación Física (DELETE)**: Se añadió el botón de "basurero" (`Trash2`) que permite al administrador eliminar permanentemente un trabajo de la base de datos previa confirmación visual, enviando un request a `/api/admin/trabajos-graduacion/[id]`.
+- **Rutas API para TG**:
+  - `GET /api/admin/trabajos-graduacion`: Extrae todo el histórico de `sistema_tg.tg` con los nombres relacionales.
+  - `DELETE /api/admin/trabajos-graduacion/[id]`: Endpoint encargado de purgar de la base de datos el registro.
+- **Ampliación del CRUD (Eliminación Física Universal)**:
+  - Se extendió la misma capacidad de borrado (`DELETE`) hacia los módulos de **Usuarios**, **Facultades** y **Carreras**.
+  - Ahora cada fila de estas tablas posee su propio icono de basurero con confirmación.
+  - **Seguridad Relacional (Foreign Keys)**: Las APIs de eliminación de Facultades y Carreras incluyen captura de errores SQL (Código `23503`). Si un administrador intenta borrar una Facultad que aún tiene Carreras asignadas, o una Carrera que tiene Usuarios, la base de datos abortará la operación de forma segura y el Frontend mostrará una alerta explicativa, protegiendo la integridad referencial.
+- **Dashboard de Administrador Dinámico (React Server Components)**:
+  - Se transformó el componente estático `/dashboard/admin/page.tsx` en un componente de servidor asíncrono.
+  - Se incorporaron 4 consultas SQL simultáneas (`Promise.all()`) para extraer en tiempo real la cantidad de: Usuarios Activos, Asesores Registrados, Facultades y Carreras.
+  - Las tarjetas resumen de la cabecera ahora reflejan el pulso exacto de la base de datos.
+
+*(Los siguientes cambios se añadirán debajo de esta línea)*
+

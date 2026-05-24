@@ -1,7 +1,25 @@
-import { Users, GraduationCap, UserCheck, FileText } from 'lucide-react';
+import { Users, GraduationCap, UserCheck, FileText, Building, BookOpen } from 'lucide-react';
+import sql from '@/lib/db';
 
-export default function AdminDashboard() {
+export const dynamic = 'force-dynamic';
+
+export default async function AdminDashboard() {
   const hoy = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Consultas a la base de datos
+  const [resUsuariosActivos, resAsesores, resFacultades, resCarreras] = await Promise.all([
+    sql`SELECT COUNT(*) as count FROM sistema_tg.usuarios WHERE activo = true`,
+    sql`SELECT COUNT(*) as count FROM sistema_tg.usuarios WHERE rol = 'asesor'`,
+    sql`SELECT COUNT(*) as count FROM sistema_tg.facultades`,
+    sql`SELECT COUNT(*) as count FROM sistema_tg.carreras`
+  ]);
+
+  const stats = {
+    usuariosActivos: parseInt(resUsuariosActivos[0].count) || 0,
+    asesores: parseInt(resAsesores[0].count) || 0,
+    facultades: parseInt(resFacultades[0].count) || 0,
+    carreras: parseInt(resCarreras[0].count) || 0,
+  };
 
   return (
     <div className="space-y-6">
@@ -17,20 +35,9 @@ export default function AdminDashboard() {
             <Users size={28} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-500">Total Usuarios</p>
-            <p className="text-2xl font-bold text-gray-800">1,248</p>
-            <p className="text-[10px] font-bold text-gray-400 mt-1 tracking-wider">ACTIVOS EN EL SISTEMA</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-green-50 text-green-600 flex items-center justify-center">
-            <GraduationCap size={28} />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-500">Egresados Activos</p>
-            <p className="text-2xl font-bold text-gray-800">856</p>
-            <p className="text-[10px] font-bold text-gray-400 mt-1 tracking-wider">+12 ESTE MES</p>
+            <p className="text-sm font-semibold text-gray-500">Usuarios Activos</p>
+            <p className="text-2xl font-bold text-gray-800">{stats.usuariosActivos}</p>
+            <p className="text-[10px] font-bold text-gray-400 mt-1 tracking-wider">REGISTRADOS EN SISTEMA</p>
           </div>
         </div>
 
@@ -39,20 +46,31 @@ export default function AdminDashboard() {
             <UserCheck size={28} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-500">Asesores Disponibles</p>
-            <p className="text-2xl font-bold text-gray-800">42 / 15</p>
-            <p className="text-[10px] font-bold text-gray-400 mt-1 tracking-wider">DISPONIBLES / OCUPADOS</p>
+            <p className="text-sm font-semibold text-gray-500">Total Asesores</p>
+            <p className="text-2xl font-bold text-gray-800">{stats.asesores}</p>
+            <p className="text-[10px] font-bold text-gray-400 mt-1 tracking-wider">DOCENTES GUÍA</p>
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-red-50 text-[#c92a2a] flex items-center justify-center">
-            <FileText size={28} />
+          <div className="w-14 h-14 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <Building size={28} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-500">TGs Registrados</p>
-            <p className="text-2xl font-bold text-gray-800">312</p>
-            <p className="text-[10px] font-bold text-gray-400 mt-1 tracking-wider">CICLO 01-2024</p>
+            <p className="text-sm font-semibold text-gray-500">Facultades</p>
+            <p className="text-2xl font-bold text-gray-800">{stats.facultades}</p>
+            <p className="text-[10px] font-bold text-gray-400 mt-1 tracking-wider">ÁREAS ACADÉMICAS</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+          <div className="w-14 h-14 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+            <BookOpen size={28} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-500">Carreras</p>
+            <p className="text-2xl font-bold text-gray-800">{stats.carreras}</p>
+            <p className="text-[10px] font-bold text-gray-400 mt-1 tracking-wider">OFERTA ACADÉMICA</p>
           </div>
         </div>
       </div>

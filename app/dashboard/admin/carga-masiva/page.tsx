@@ -24,6 +24,7 @@ const FORMATOS = {
 export default function CargaMasivaPage() {
   const [selectedType, setSelectedType] = useState<keyof typeof FORMATOS | null>(null);
   const [parsedData, setParsedData] = useState<{ headers: string[], rows: any[] } | null>(null);
+  const [csvErrors, setCsvErrors] = useState<{ fila: number, mensaje: string }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [fileName, setFileName] = useState('');
   
@@ -57,9 +58,44 @@ export default function CargaMasivaPage() {
       const text = event.target?.result as string;
       const data = parseCSV(text);
       if (data) {
+        // Validación de duplicados y errores
+        const uniqueKeys = new Set();
+        const erroresGenerados: { fila: number, mensaje: string }[] = [];
+
+        for (let i = 0; i < data.rows.length; i++) {
+          const row = data.rows[i];
+          const filaNum = i + 2; // +1 por base 0, +1 por la fila de cabeceras
+          let key = '';
+          
+          if (selectedType === 'facultades' || selectedType === 'carreras') {
+            key = row.codigo;
+          } else if (selectedType === 'usuarios') {
+            key = row.correo;
+          }
+
+          // Verificar duplicado de clave primaria
+          if (key) {
+            if (uniqueKeys.has(key)) {
+              erroresGenerados.push({ fila: filaNum, mensaje: `Duplicado: La clave "${key}" ya existe en filas anteriores.` });
+            } else {
+              uniqueKeys.add(key);
+            }
+          }
+
+          // Verificar campos requeridos (básico)
+          FORMATOS[selectedType].columnas.forEach(col => {
+            if (!row[col] && col !== 'carnet' && col !== 'carreras_asignadas_json') {
+              erroresGenerados.push({ fila: filaNum, mensaje: `Falta información requerida en la columna: "${col}".` });
+            }
+          });
+        }
+
+        setCsvErrors(erroresGenerados);
         setParsedData(data);
       } else {
         alert('El archivo CSV parece estar vacío o mal formateado.');
+        setFileName('');
+        if (fileInputRef.current) fileInputRef.current.value = '';
       }
     };
     reader.readAsText(file, 'UTF-8');
@@ -169,13 +205,17 @@ export default function CargaMasivaPage() {
                   />
                 </div>
 
-                <div className="mt-8 flex items-start gap-3 p-4 bg-blue-50 rounded-xl text-blue-700 text-sm text-left">
-                  <AlertCircle size={20} className="shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-bold mb-1">Estructura requerida para {FORMATOS[selectedType].nombre}:</p>
-                    <p className="font-mono text-xs mt-1 bg-white/50 p-2 rounded">
-                      {FORMATOS[selectedType].columnas.join(',')}
-                    </p>
+                <div className="mt-8 p-5 bg-blue-50 border border-blue-100 rounded-2xl text-blue-800 text-left">
+                  <div className="flex items-center gap-2 mb-3">
+                    <AlertCircle size={20} className="shrink-0 text-blue-600" />
+                    <p className="font-bold">Estructura requerida para {FORMATOS[selectedType].nombre}:</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pl-7">
+                    {FORMATOS[selectedType].columnas.map((col, idx) => (
+                      <span key={idx} className="font-mono text-xs bg-white text-blue-700 px-2.5 py-1 rounded-lg border border-blue-200 shadow-sm">
+                        {col}
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -193,12 +233,34 @@ export default function CargaMasivaPage() {
                     </p>
                   </div>
                   <button 
-                    onClick={() => { setParsedData(null); setFileName(''); if(fileInputRef.current) fileInputRef.current.value = ''; }}
+                    onClick={() => { setParsedData(null); setFileName(''); setCsvErrors([]); if(fileInputRef.current) fileInputRef.current.value = ''; }}
                     className="text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors flex items-center gap-1 text-sm font-bold"
                   >
                     <X size={16} /> Cancelar y subir otro
                   </button>
                 </div>
+
+                {/* PANEL DE ERRORES */}
+                {csvErrors.length > 0 && (
+                  <div className="mb-6 border border-red-200 bg-red-50 rounded-xl overflow-hidden shadow-sm">
+                    <div className="bg-red-100 px-4 py-3 border-b border-red-200 flex items-center gap-2">
+                      <AlertCircle className="text-red-600" size={18} />
+                      <h4 className="font-bold text-red-800 text-sm">
+                        Se encontraron {csvErrors.length} error(es) en el archivo
+                      </h4>
+                    </div>
+                    <div className="p-4 max-h-40 overflow-y-auto custom-scrollbar">
+                      <ul className="space-y-2">
+                        {csvErrors.map((err, idx) => (
+                          <li key={idx} className="text-xs text-red-700 flex items-start gap-2">
+                            <span className="font-bold min-w-[50px] shrink-0 bg-red-100 px-1.5 py-0.5 rounded text-center">Fila {err.fila}</span>
+                            <span>{err.mensaje}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
 
                 {/* TABLA PREVIEW */}
                 <div className="border border-gray-200 rounded-xl overflow-hidden flex-1 mb-6 max-h-[400px] overflow-y-auto custom-scrollbar">
@@ -235,18 +297,18 @@ export default function CargaMasivaPage() {
                 )}
 
                 {/* ACCIONES FINALES */}
-                <div className="bg-green-50 p-4 border border-green-100 rounded-xl flex items-center justify-between mt-auto">
-                  <div className="flex items-center gap-3 text-green-800">
-                    <CheckCircle2 size={24} />
+                <div className={`${csvErrors.length > 0 ? 'bg-gray-50 border-gray-200 text-gray-500' : 'bg-green-50 border-green-100 text-green-800'} p-4 border rounded-xl flex items-center justify-between mt-auto`}>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 size={24} className={csvErrors.length > 0 ? 'text-gray-400' : 'text-green-600'} />
                     <div>
-                      <p className="font-bold">¿La información de la tabla es correcta?</p>
-                      <p className="text-sm opacity-90">Verifica que las columnas coincidan con lo esperado antes de subir a Neon.</p>
+                      <p className="font-bold">{csvErrors.length > 0 ? 'No puedes subir un archivo con errores' : '¿La información de la tabla es correcta?'}</p>
+                      <p className="text-sm opacity-90">{csvErrors.length > 0 ? 'Corrige los errores detallados arriba y vuelve a intentar.' : 'Verifica que las columnas coincidan con lo esperado antes de subir a Neon.'}</p>
                     </div>
                   </div>
                   <button 
                     onClick={handleConfirmarSubida}
-                    disabled={isUploading}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                    disabled={isUploading || csvErrors.length > 0}
+                    className={`${csvErrors.length > 0 ? 'bg-gray-300 text-gray-500' : 'bg-green-600 hover:bg-green-700 text-white'} px-6 py-3 rounded-xl font-bold transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2`}
                   >
                     {isUploading ? <Loader2 size={20} className="animate-spin" /> : <Check size={20} />}
                     {isUploading ? 'Procesando subida...' : 'Confirmar y Subir a Base de Datos'}

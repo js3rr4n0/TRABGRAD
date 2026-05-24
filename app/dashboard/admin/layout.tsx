@@ -1,5 +1,5 @@
 'use client';
-import { LayoutDashboard, Users, UploadCloud, LogOut, Search, Bell, Building } from 'lucide-react';
+import { LayoutDashboard, Users, UploadCloud, LogOut, Search, Bell, Building, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
@@ -48,6 +48,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           >
             <Building size={20} className={pathname.includes('/dashboard/admin/facultades-carreras') ? 'opacity-100' : 'opacity-70'} />
             <span className="text-sm">Facultades y Carreras</span>
+          </Link>
+
+          <Link 
+            href="/dashboard/admin/trabajos-graduacion" 
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${pathname.includes('/dashboard/admin/trabajos-graduacion') ? 'bg-white/20 font-semibold shadow-inner' : 'hover:bg-white/10 opacity-90'}`}
+          >
+            <BookOpen size={20} className={pathname.includes('/dashboard/admin/trabajos-graduacion') ? 'opacity-100' : 'opacity-70'} />
+            <span className="text-sm">Trabajos de Graduación</span>
           </Link>
 
           <Link 

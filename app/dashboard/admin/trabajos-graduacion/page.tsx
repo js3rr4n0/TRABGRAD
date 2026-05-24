@@ -1,0 +1,167 @@
+'use client';
+import { BookOpen, Search, Trash2, Eye, Plus, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
+type Trabajo = {
+  id: number;
+  titulo: string;
+  tipo: string;
+  estado: string;
+  fecha_envio: string | null;
+  asesor_nombre: string | null;
+  coordinador_nombre: string | null;
+};
+
+export default function TrabajosGraduacionPage() {
+  const [trabajos, setTrabajos] = useState<Trabajo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function fetchTrabajos() {
+      try {
+        const res = await fetch('/api/admin/trabajos-graduacion');
+        if (res.ok) {
+          const data = await res.json();
+          setTrabajos(data.trabajos || []);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTrabajos();
+  }, []);
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar este trabajo de graduación? Esta acción no se puede deshacer.')) return;
+    
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/admin/trabajos-graduacion/${id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setTrabajos(trabajos.filter(t => t.id !== id));
+      } else {
+        alert('Error al eliminar el registro.');
+      }
+    } catch (error) {
+      alert('Error de conexión.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const getEstadoStyle = (estado: string) => {
+    switch (estado) {
+      case 'aprobada': return 'bg-green-100 text-green-800';
+      case 'rechazada': return 'bg-red-100 text-red-800';
+      case 'en_progreso': return 'bg-blue-100 text-blue-800';
+      case 'finalizada': return 'bg-purple-100 text-purple-800';
+      case 'abandonada': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-yellow-100 text-yellow-800'; // borrador, enviada
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1b263b] flex items-center gap-2">
+            <BookOpen size={24} className="text-[#c92a2a]" />
+            Trabajos de Graduación
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">Gestiona los temas históricos y proyectos activos de los estudiantes.</p>
+        </div>
+        <button className="bg-[#1b263b] hover:bg-[#0d1627] text-white px-4 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-sm text-sm">
+          <Plus size={18} />
+          <span>Nuevo Registro</span>
+        </button>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <input 
+            type="text" 
+            placeholder="Buscar por título o asesor..." 
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all"
+          />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-50/50 border-b border-gray-100 text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+              <th className="px-6 py-4">Título del Trabajo</th>
+              <th className="px-6 py-4">Tipo</th>
+              <th className="px-6 py-4">Asesores / Coord.</th>
+              <th className="px-6 py-4 text-center">Estado</th>
+              <th className="px-6 py-4 text-center">Fecha Envío</th>
+              <th className="px-6 py-4 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-50 text-sm">
+            {loading ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                  <div className="flex flex-col items-center justify-center">
+                    <Loader2 size={32} className="animate-spin text-[#c92a2a] mb-2" />
+                    Cargando trabajos de graduación...
+                  </div>
+                </td>
+              </tr>
+            ) : trabajos.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                  No hay trabajos de graduación registrados. Sube el CSV en Carga Masiva.
+                </td>
+              </tr>
+            ) : (
+              trabajos.map((tg) => (
+                <tr key={tg.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-6 py-4 max-w-[250px]">
+                    <p className="font-bold text-[#1b263b] truncate" title={tg.titulo}>{tg.titulo}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="font-medium text-gray-600 capitalize">{tg.tipo}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-sm font-medium text-gray-800">{tg.asesor_nombre || 'Sin Asesor'}</p>
+                    <p className="text-xs text-gray-500">{tg.coordinador_nombre || 'Sin Coord.'}</p>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getEstadoStyle(tg.estado)}`}>
+                      {tg.estado.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center text-gray-600 text-xs font-medium">
+                    {tg.fecha_envio ? new Date(tg.fecha_envio).toLocaleDateString() : '-'}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-3">
+                      <button className="text-gray-400 hover:text-blue-600 transition-colors" title="Ver Detalles">
+                        <Eye size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(tg.id)}
+                        disabled={deletingId === tg.id}
+                        className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                        title="Eliminar de la Base de Datos"
+                      >
+                        {deletingId === tg.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

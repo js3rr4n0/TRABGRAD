@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Building, BookOpen, Plus, Loader2, AlertCircle } from 'lucide-react';
+import { Building, BookOpen, Plus, Loader2, AlertCircle, Trash2 } from 'lucide-react';
 
 type Facultad = { id: number; nombre: string; codigo: string; activa: boolean };
 type Carrera = { id: number; nombre: string; codigo: string; facultad_id: number; facultad_nombre?: string; activa: boolean };
@@ -16,6 +16,7 @@ export default function FacultadesCarrerasPage() {
   const [nuevaCarrera, setNuevaCarrera] = useState({ nombre: '', codigo: '', facultad_id: '' });
   const [savingFacultad, setSavingFacultad] = useState(false);
   const [savingCarrera, setSavingCarrera] = useState(false);
+  const [deletingId, setDeletingId] = useState<{tipo: 'facultad'|'carrera', id: number} | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -94,6 +95,42 @@ export default function FacultadesCarrerasPage() {
     }
   };
 
+  const handleDeleteFacultad = async (id: number) => {
+    if (!confirm('¿Seguro que deseas eliminar esta facultad? Si tiene carreras asignadas, no se podrá borrar.')) return;
+    setDeletingId({ tipo: 'facultad', id });
+    try {
+      const res = await fetch(`/api/admin/facultades/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setFacultades(facultades.filter(f => f.id !== id));
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Error al eliminar');
+      }
+    } catch (err) {
+      alert('Error de red');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleDeleteCarrera = async (id: number) => {
+    if (!confirm('¿Seguro que deseas eliminar esta carrera?')) return;
+    setDeletingId({ tipo: 'carrera', id });
+    try {
+      const res = await fetch(`/api/admin/carreras/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setCarreras(carreras.filter(c => c.id !== id));
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Error al eliminar');
+      }
+    } catch (err) {
+      alert('Error de red');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -161,6 +198,7 @@ export default function FacultadesCarrerasPage() {
                     <th className="px-4 py-3">Código</th>
                     <th className="px-4 py-3">Nombre</th>
                     <th className="px-4 py-3 text-center">Estado</th>
+                    <th className="px-4 py-3 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -174,6 +212,16 @@ export default function FacultadesCarrerasPage() {
                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${fac.activa ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                           {fac.activa ? 'ACTIVO' : 'INACTIVO'}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button 
+                          onClick={() => handleDeleteFacultad(fac.id)}
+                          disabled={deletingId?.tipo === 'facultad' && deletingId.id === fac.id}
+                          className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                          title="Eliminar"
+                        >
+                          {deletingId?.tipo === 'facultad' && deletingId.id === fac.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -239,6 +287,7 @@ export default function FacultadesCarrerasPage() {
                     <th className="px-4 py-3">Código</th>
                     <th className="px-4 py-3">Carrera y Facultad</th>
                     <th className="px-4 py-3 text-center">Estado</th>
+                    <th className="px-4 py-3 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -255,6 +304,16 @@ export default function FacultadesCarrerasPage() {
                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${car.activa ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                           {car.activa ? 'ACTIVO' : 'INACTIVO'}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button 
+                          onClick={() => handleDeleteCarrera(car.id)}
+                          disabled={deletingId?.tipo === 'carrera' && deletingId.id === car.id}
+                          className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                          title="Eliminar"
+                        >
+                          {deletingId?.tipo === 'carrera' && deletingId.id === car.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                        </button>
                       </td>
                     </tr>
                   ))}

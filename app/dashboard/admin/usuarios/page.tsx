@@ -1,5 +1,5 @@
 'use client';
-import { Plus, Search, Edit3, Eye, MoreHorizontal, Check, X, Loader2 } from 'lucide-react';
+import { Plus, Search, Edit3, Eye, MoreHorizontal, Check, X, Loader2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
@@ -20,6 +20,7 @@ export default function UsuariosPage() {
   const [loading, setLoading] = useState(true);
   const [modificados, setModificados] = useState<Set<number>>(new Set());
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchUsuarios() {
@@ -77,6 +78,24 @@ export default function UsuariosPage() {
       alert('Hubo un error al guardar los cambios.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar permanentemente a este usuario?')) return;
+    
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/admin/usuarios/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setUsuarios(usuarios.filter(u => u.id !== id));
+      } else {
+        alert('Error al eliminar el usuario.');
+      }
+    } catch (error) {
+      alert('Error de conexión.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -192,10 +211,17 @@ export default function UsuariosPage() {
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-center gap-3 text-gray-500">
-                    <Link href={`/dashboard/admin/usuarios/${user.id}/editar`} className="hover:text-blue-600 transition-colors">
+                    <Link href={`/dashboard/admin/usuarios/${user.id}/editar`} className="hover:text-blue-600 transition-colors" title="Editar">
                       <Edit3 size={18} />
                     </Link>
-                    <button className="hover:text-gray-800 transition-colors"><Eye size={18} /></button>
+                    <button 
+                      onClick={() => handleDelete(user.id)}
+                      disabled={deletingId === user.id}
+                      className="hover:text-red-600 transition-colors disabled:opacity-50"
+                      title="Eliminar"
+                    >
+                      {deletingId === user.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                    </button>
                   </div>
                 </td>
               </tr>
