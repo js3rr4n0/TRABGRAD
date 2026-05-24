@@ -57,7 +57,7 @@ export default function CargaMasivaPage() {
     reader.onload = (event) => {
       const text = event.target?.result as string;
       const data = parseCSV(text);
-      if (data) {
+      if (data && selectedType) {
         // Validación de duplicados y errores
         const uniqueKeys = new Set();
         const erroresGenerados: { fila: number, mensaje: string }[] = [];
@@ -268,11 +268,14 @@ export default function CargaMasivaPage() {
                     <thead className="bg-gray-100 text-gray-700 font-bold sticky top-0 shadow-sm">
                       <tr>
                         <th className="px-4 py-3 bg-gray-100">#</th>
-                        {parsedData.headers.map((h, i) => (
-                          <th key={i} className={`px-4 py-3 bg-gray-100 ${!FORMATOS[selectedType].columnas.includes(h) ? 'text-red-500' : ''}`}>
-                            {h}
-                          </th>
-                        ))}
+                        {parsedData.headers.map((h, i) => {
+                          const esColumnaValida = selectedType && FORMATOS[selectedType].columnas.includes(h);
+                          return (
+                            <th key={i} className={`px-4 py-3 bg-gray-100 ${!esColumnaValida ? 'text-red-500' : ''}`}>
+                              {h}
+                            </th>
+                          );
+                        })}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
