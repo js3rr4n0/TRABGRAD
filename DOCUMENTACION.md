@@ -153,5 +153,17 @@ Este archivo documenta los cambios realizados en el proyecto y sirve como regist
   - Dado que Vercel utiliza un sistema de archivos de solo lectura en producción, se desarrolló un sistema para guardar archivos PDF e Imágenes nativamente dentro de la base de datos PostgreSQL de Neon usando el tipo de dato `BYTEA`.
   - Se creó la tabla `sistema_tg.archivos` para almacenar el binario, el nombre y el tipo MIME.
   - Se habilitó la ruta dinámica `GET /api/archivos/[id]` para servir estos binarios en tiempo real al usuario de la misma forma que un enlace directo, permitiendo previsualizaciones completas y descargas sin servicios externos.
-
-
+  - El sistema detecta cuando el binario pertenece a una imagen gracias al parámetro `?ext=`, para previsualizarlo automáticamente dentro del Foro.
+- **Resumen Dinámico de Egresado**:
+  - Tras enviar las propuestas, el dashboard del estudiante cambia a modo "Esperando Dictamen".
+  - Muestra un desglose visual de los textos de la Propuesta 1, 2 y 3, así como un enlace directo para que el alumno pueda volver a descargar su PDF adjunto.
+- **Panel de Evaluación del Administrador (Coordinador)**:
+  - Se habilitó la vista detallada de cada trabajo de graduación en `/dashboard/admin/trabajos-graduacion/[id]`.
+  - El panel cuenta con un sistema de pestañas para dividir la información entre la **Evaluación de Propuestas** y el **Foro del Proyecto**.
+  - El administrador ahora tiene total acceso al Foro privado de cada grupo para dar retroalimentación asíncrona antes de emitir un dictamen.
+- **Flujo de Dictamen de Propuestas**:
+  - **Aprobación Selectiva**: El administrador revisa las tres opciones y hace clic en la tarjeta de la propuesta ganadora. Esto la preselecciona como el **Título Definitivo**. Al aprobar, el TG cambia su estado a "en_progreso" y se actualiza su título oficial en la base de datos, mientras que las demás propuestas quedan archivadas históricamente.
+  - **Rechazo**: El administrador redacta el motivo del rechazo en el campo de Feedback. Esto devuelve el proyecto al estado "borrador", marca el intento actual como rechazado y habilita al grupo para que agote su segundo/tercer intento de propuestas desde su dashboard.
+- **Parches Técnicos y Estabilidad**:
+  - Actualización global a `Next.js 15+ Async Params` en las rutas de API dinámicas (`[id]`) para asegurar compatibilidad con la estructura estricta `Promise<{ id: string }>` requerida por el entorno de compilación de Vercel.
+  - Script manual ejecutado (`fix_borrador.ts`) para sincronizar el estado antiguo de proyectos que se habían quedado huérfanos entre las fases de validación de base de datos.
