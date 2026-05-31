@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, XCircle, FileText, Loader2, Users } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, FileText, Loader2, Users, MessageSquare, Paperclip, Send } from 'lucide-react';
 import Link from 'next/link';
+import { useRef } from 'react';
 
 export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -13,6 +14,15 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
   const [equipo, setEquipo] = useState<any[]>([]);
   const [propuesta, setPropuesta] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'propuestas'|'comentarios'>('propuestas');
+
+  // Chat
+  const [comentarios, setComentarios] = useState<any[]>([]);
+  const [nuevoComentario, setNuevoComentario] = useState('');
+  const [comentarioFile, setComentarioFile] = useState<File | null>(null);
+  const comentarioFileInputRef = useRef<HTMLInputElement>(null);
+  const [enviandoComentario, setEnviandoComentario] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // Estados para modales de aprobación/rechazo
   const [actionLoading, setActionLoading] = useState(false);
@@ -48,7 +58,41 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
 
   useEffect(() => {
     fetchDetails();
+    fetchComentarios();
   }, [id]);
+
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [comentarios, activeTab]);
+
+  const fetchComentarios = async () => {
+    try {
+      const res = await fetch(`/api/comentarios?tg_id=${id}`);
+      if (res.ok) setComentarios(await res.json());
+    } catch(err) {}
+  };
+
+  const enviarComentario = async () => {
+    if (!nuevoComentario.trim() && !comentarioFile) return;
+    setEnviandoComentario(true);
+    try {
+      const formData = new FormData();
+      formData.append('tg_id', id as string);
+      formData.append('mensaje', nuevoComentario);
+      if (comentarioFile) formData.append('archivo', comentarioFile);
+
+      const res = await fetch('/api/comentarios', { method: 'POST', body: formData });
+      if (res.ok) {
+        setComentarios([...comentarios, await res.json()]);
+        setNuevoComentario('');
+        setComentarioFile(null);
+        if (comentarioFileInputRef.current) comentarioFileInputRef.current.value = '';
+      }
+    } catch(err) {}
+    setEnviandoComentario(false);
+  };
 
   const handleAction = async (action: 'approve' | 'reject') => {
     setActionLoading(true);
@@ -95,8 +139,24 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* COLUMNA PRINCIPAL */}
         <div className="lg:col-span-2 space-y-6">
-          {/* SECCIÓN DE PROPUESTAS */}
-          {propuesta ? (
+          <div className="flex gap-4 border-b border-gray-200 pb-px">
+            <button 
+              onClick={() => setActiveTab('propuestas')}
+              className={`pb-3 px-1 font-bold text-sm transition-colors border-b-2 ${activeTab === 'propuestas' ? 'border-[#c92a2a] text-[#c92a2a]' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
+            >
+              Evaluación de Propuestas
+            </button>
+            <button 
+              onClick={() => setActiveTab('comentarios')}
+              className={`pb-3 px-1 font-bold text-sm transition-colors border-b-2 flex items-center gap-2 ${activeTab === 'comentarios' ? 'border-[#c92a2a] text-[#c92a2a]' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
+            >
+              Foro del Proyecto
+            </button>
+          </div>
+
+          {activeTab === 'propuestas' ? (
+            /* SECCIÓN DE PROPUESTAS */
+            propuesta ? (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
               <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                 <h2 className="text-lg font-bold text-gray-800">Propuestas Enviadas</h2>
@@ -114,8 +174,15 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
                   } catch (e) {}
 
                   return pText ? (
-                    <div key={num} className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                      <p className="text-xs font-bold text-gray-500 mb-1 uppercase">Propuesta {num}</p>
+                    <div 
+                      key={num} 
+                      className={`p-4 rounded-xl border cursor-pointer transition-colors ${tituloAprobado === pText ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-100 hover:bg-gray-100'}`}
+                      onClick={() => setTituloAprobado(pText)}
+                    >
+                      <div className="flex justify-between items-center mb-1">
+                        <p className="text-xs font-bold text-gray-500 uppercase">Propuesta {num}</p>
+                        {tituloAprobado === pText && <CheckCircle2 size={16} className="text-green-600" />}
+                      </div>
                       <p className="text-sm text-gray-800">{pText}</p>
                     </div>
                   ) : null;
@@ -152,6 +219,89 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
               <FileText className="mx-auto text-gray-300 mb-4" size={48} />
               <h3 className="text-lg font-bold text-gray-800 mb-1">Aún no hay propuestas</h3>
               <p className="text-gray-500 text-sm">El grupo se encuentra redactando las propuestas o en fase de borrador.</p>
+            </div>
+          )) : (
+            /* TAB DE COMENTARIOS */
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-gray-50 p-4 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <MessageSquare size={20} className="text-gray-500" />
+                  <h3 className="font-bold text-gray-800">Foro del Proyecto</h3>
+                </div>
+                <span className="text-xs text-gray-400">{comentarios.length} mensajes</span>
+              </div>
+              
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-gray-50/30">
+                {comentarios.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-3 opacity-60">
+                    <MessageSquare size={48} />
+                    <p className="text-sm font-medium">Aún no hay mensajes en este proyecto</p>
+                  </div>
+                ) : (
+                  comentarios.map((msg, idx) => {
+                    const isMe = msg.rol === 'administrador'; 
+                    return (
+                      <div key={idx} className={`flex items-start gap-4 ${isMe ? 'flex-row-reverse' : ''}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${isMe ? 'bg-[#c92a2a] text-white' : 'bg-blue-100 text-blue-700'}`}>
+                          {msg.nombre_completo.substring(0,2).toUpperCase()}
+                        </div>
+                        <div className={`p-4 rounded-2xl max-w-[85%] ${isMe ? 'bg-[#c92a2a] text-white rounded-tr-sm' : 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm shadow-sm'}`}>
+                          <div className={`flex items-center justify-between mb-1 gap-4 ${isMe ? 'text-white/80' : 'text-gray-500'}`}>
+                            <span className="font-bold text-xs">{msg.nombre_completo} ({msg.rol})</span>
+                            <span className="text-[10px]">{new Date(msg.creado_en).toLocaleString()}</span>
+                          </div>
+                          {msg.mensaje && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.mensaje}</p>}
+                          
+                          {msg.archivo_url && (
+                            <a href={msg.archivo_url} target="_blank" className={`mt-3 inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${isMe ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>
+                              {msg.archivo_url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                                <img src={msg.archivo_url} alt="Adjunto" className="max-h-32 rounded object-cover" />
+                              ) : (
+                                <><Paperclip size={14}/> Ver Archivo Adjunto</>
+                              )}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Input Comentario */}
+              <div className="p-4 bg-white border-t border-gray-100">
+                {comentarioFile && (
+                  <div className="mb-3 flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-xs font-medium w-fit">
+                    <Paperclip size={14} />
+                    {comentarioFile.name}
+                    <button onClick={() => setComentarioFile(null)} className="ml-2 text-blue-400 hover:text-blue-800 font-bold">×</button>
+                  </div>
+                )}
+                <div className="flex items-end gap-3">
+                  <div className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl p-2 relative focus-within:border-[#c92a2a] transition-colors">
+                    <textarea 
+                      value={nuevoComentario}
+                      onChange={e => setNuevoComentario(e.target.value)}
+                      placeholder="Escribe un mensaje al grupo..." 
+                      className="w-full bg-transparent resize-none focus:outline-none text-sm text-gray-900 placeholder-gray-500 p-2 max-h-32 min-h-[40px] custom-scrollbar"
+                      rows={2}
+                    ></textarea>
+                    <div className="absolute right-3 bottom-3 flex items-center gap-2">
+                      <input type="file" ref={comentarioFileInputRef} className="hidden" onChange={e => e.target.files && setComentarioFile(e.target.files[0])} />
+                      <button onClick={() => comentarioFileInputRef.current?.click()} className="text-gray-400 hover:text-[#c92a2a] transition-colors p-1" title="Adjuntar Archivo o Imagen">
+                        <Paperclip size={18} />
+                      </button>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={enviarComentario}
+                    disabled={(!nuevoComentario.trim() && !comentarioFile) || enviandoComentario}
+                    className="bg-[#1b263b] text-white p-4 rounded-xl hover:bg-[#0d1627] disabled:opacity-50 transition-colors shadow-sm shrink-0 flex items-center justify-center"
+                  >
+                    {enviandoComentario ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -192,7 +342,7 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-md p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-2">Aprobar Proyecto</h3>
-            <p className="text-sm text-gray-500 mb-6">Selecciona o edita el título definitivo con el cual el proyecto será registrado de ahora en adelante.</p>
+            <p className="text-sm text-gray-500 mb-6">El título seleccionado será el título definitivo del proyecto. Puedes editarlo libremente.</p>
             
             <label className="block text-sm font-bold text-gray-700 mb-2">Título Definitivo del Proyecto</label>
             <textarea 
