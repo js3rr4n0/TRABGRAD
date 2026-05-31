@@ -1,9 +1,13 @@
+'use client';
 import Link from 'next/link';
 import { LogOut, User, Bell, GraduationCap } from 'lucide-react';
-import { signOut } from '@/auth'; // Assuming auth is properly configured
-import { redirect } from 'next/navigation';
+import { signOut } from 'next-auth/react';
+import { usePathname } from 'next/navigation';
 
-export default async function EgresadoLayout({ children }: { children: React.ReactNode }) {
+export default function EgresadoLayout({ children }: { children: React.ReactNode }) {
+  const handleSignOut = () => {
+    signOut({ callbackUrl: '/login' });
+  };
   // Aquí podemos cargar la sesión para el nombre
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex flex-col font-sans">
@@ -24,15 +28,23 @@ export default async function EgresadoLayout({ children }: { children: React.Rea
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-[#c92a2a]"></span>
               </button>
               
-              <div className="flex items-center gap-3 pl-6 border-l border-gray-700">
+              <div className="flex items-center gap-3 pl-6 border-l border-[#ff4d4d]/30">
                 <div className="text-right hidden sm:block">
                   <p className="text-sm font-bold leading-tight">Egresado</p>
-                  <p className="text-xs text-gray-400">Portal Estudiantil</p>
+                  <p className="text-xs text-white/70">Portal Estudiantil</p>
                 </div>
-                <div className="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center border border-white/30">
                   <User size={18} />
                 </div>
               </div>
+              
+              <button 
+                onClick={handleSignOut}
+                className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white/80 hover:text-white ml-2"
+                title="Cerrar Sesión"
+              >
+                <LogOut size={16} />
+              </button>
             </div>
           </div>
         </div>
