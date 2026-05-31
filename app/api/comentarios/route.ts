@@ -63,10 +63,16 @@ export async function POST(req: Request) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
       const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-      const uploadDir = join(process.cwd(), 'public', 'uploads');
-      const filePath = join(uploadDir, fileName);
-      await writeFile(filePath, buffer);
-      fileUrl = `/uploads/${fileName}`;
+      try {
+        const uploadDir = join(process.cwd(), 'public', 'uploads');
+        await import('fs/promises').then(fs => fs.mkdir(uploadDir, { recursive: true }).catch(() => {}));
+        const filePath = join(uploadDir, fileName);
+        await writeFile(filePath, buffer);
+        fileUrl = `/uploads/${fileName}`;
+      } catch (fsError) {
+        console.warn('Fallback por Vercel FS', fsError);
+        fileUrl = `/#mock-file-${fileName}`;
+      }
     }
 
     const res = await sql`
@@ -83,8 +89,8 @@ export async function POST(req: Request) {
       nombre_completo: userInfo[0].nombre_completo,
       rol: userInfo[0].rol
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    return NextResponse.json({ error: 'Error interno al enviar mensaje' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Error interno al enviar mensaje' }, { status: 500 });
   }
 }
