@@ -93,20 +93,20 @@ export async function PUT(req: Request, props: { params: Promise<{ id: string }>
         return NextResponse.json({ error: 'El título definitivo no puede tener más de 255 caracteres. Por favor, resúmelo.' }, { status: 400 });
       }
 
-      await sql`UPDATE sistema_tg.tg_propuestas SET estado = 'aprobada' WHERE tg_id = ${tgId} AND activa = true`;
+      await sql`UPDATE sistema_tg.tg_propuestas SET estado = 'aprobada', fecha_resolucion = CURRENT_TIMESTAMP WHERE tg_id = ${tgId} AND activa = true`;
       await sql`
         UPDATE sistema_tg.tg 
         SET estado = 'en_progreso', titulo = ${titulo_aprobado || 'Proyecto Aprobado'}, fecha_inicio = CURRENT_DATE 
         WHERE id = ${tgId}
       `;
     } else if (action === 'reject') {
-      await sql`UPDATE sistema_tg.tg_propuestas SET estado = 'rechazada', motivo_rechazo = ${motivo_rechazo} WHERE tg_id = ${tgId} AND activa = true`;
+      await sql`UPDATE sistema_tg.tg_propuestas SET estado = 'rechazada', motivo_rechazo = ${motivo_rechazo}, fecha_resolucion = CURRENT_TIMESTAMP WHERE tg_id = ${tgId} AND activa = true`;
       await sql`UPDATE sistema_tg.tg SET estado = 'borrador' WHERE id = ${tgId}`;
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Error procesando solicitud' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Error PUT:', error);
+    return NextResponse.json({ error: error.message || 'Error procesando solicitud' }, { status: 500 });
   }
 }
