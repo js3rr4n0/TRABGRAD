@@ -348,20 +348,57 @@ export default function EgresadoDashboard() {
               {/* PROPUESTAS TEXTO */}
               {propuestaActiva ? (
                 <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 space-y-6">
-                  <h3 className="font-bold text-gray-800 flex items-center gap-2 border-b border-gray-200 pb-2">
-                    <CheckCircle2 className="text-green-600" size={20} />
-                  Propuestas Enviadas Exitosamente
-                  </h3>
+                  <div className="flex items-center justify-between border-b border-gray-200 pb-4">
+                    <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                      <Clock className="text-yellow-600" size={20} />
+                      Esperando Dictamen
+                    </h3>
+                    <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+                      En Revisión
+                    </span>
+                  </div>
+
+                  <p className="text-sm text-gray-600">Has enviado exitosamente tus propuestas. El coordinador las revisará pronto. A continuación, un resumen de lo enviado:</p>
+
                   {propuestaActiva.motivo_rechazo && (
                     <div className="bg-red-50 text-red-800 p-4 rounded-xl border border-red-200">
-                      <p className="font-bold text-sm mb-1">Motivo de Rechazo:</p>
+                      <p className="font-bold text-sm mb-1">Motivo de Rechazo Anterior:</p>
                       <p className="text-sm">{propuestaActiva.motivo_rechazo}</p>
                     </div>
                   )}
-                  <p className="text-sm text-gray-600">Has enviado tus propuestas. Por favor, espera a que el coordinador las revise y emita una resolución en la sección de comentarios.</p>
-                  <div className="flex items-center gap-2 bg-white p-4 rounded-xl border border-gray-200">
-                    <FileText className="text-gray-400" />
-                    <a href={propuestaActiva.documento_url} target="_blank" className="text-blue-600 font-bold hover:underline text-sm">Ver Documento Soporte PDF</a>
+
+                  <div className="space-y-4">
+                    {[1, 2, 3].map(num => {
+                      let pText = '';
+                      try {
+                        const desc = typeof propuestaActiva.descripcion === 'string' 
+                          ? JSON.parse(propuestaActiva.descripcion) 
+                          : propuestaActiva.descripcion;
+                        pText = desc[`p${num}`];
+                      } catch (e) {}
+
+                      return pText ? (
+                        <div key={num} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                          <p className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Propuesta {num}</p>
+                          <p className="text-sm text-gray-800">{pText}</p>
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+
+                  <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-gray-200 shadow-sm mt-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+                        <FileText className="text-[#c92a2a]" size={20} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-800">Documento de Soporte</p>
+                        <p className="text-xs text-gray-500">PDF Adjunto Original</p>
+                      </div>
+                    </div>
+                    <a href={propuestaActiva.documento_url} target="_blank" className="bg-blue-50 text-blue-600 font-bold hover:bg-blue-100 transition-colors text-xs px-4 py-2 rounded-lg">
+                      Descargar PDF
+                    </a>
                   </div>
                 </div>
               ) : (
