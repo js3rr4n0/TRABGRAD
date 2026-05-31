@@ -143,5 +143,6 @@ Este archivo documenta los cambios realizados en el proyecto y sirve como regist
   - El alumno líder puede hacer clic en "Invitar Integrante", ingresar el carnet de un compañero, y la API (`POST /api/egresado/invitaciones`) validará al usuario y le creará una invitación pendiente en la tabla `tg_egresados`.
   - Cuando el compañero inicie sesión, en lugar del dashboard normal, verá una pantalla de alerta indicando que fue invitado al proyecto, con opciones para "Aceptar" o "Rechazar" (`PUT /api/egresado/invitaciones`).
   - Al aceptar, ambos visualizarán exactamente el mismo dashboard, con el mismo historial de propuestas y comentarios, y el panel lateral mostrará al equipo completo con sus carnets y roles (Líder / Integrante).
+  - *Nota Técnica*: Fue necesario ejecutar `ALTER TYPE sistema_tg.estado_participacion_tg ADD VALUE IF NOT EXISTS 'invitado';` en la base de datos para habilitar este flujo, dado que el campo es un ENUM.
 
 
