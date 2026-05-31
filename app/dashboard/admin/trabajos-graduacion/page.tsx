@@ -165,9 +165,9 @@ export default function TrabajosGraduacionPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-3">
-                      <button className="text-gray-400 hover:text-blue-600 transition-colors" title="Ver Detalles">
+                      <Link href={`/dashboard/admin/trabajos-graduacion/${tg.id}`} className="text-gray-400 hover:text-blue-600 transition-colors" title="Ver Detalles">
                         <Eye size={18} />
-                      </button>
+                      </Link>
                       <button 
                         onClick={() => handleDelete(tg.id)}
                         disabled={deletingId === tg.id}

@@ -141,6 +141,9 @@ export async function POST(req: Request) {
       VALUES (${tgId}, ${nuevoIntento}, ${fileUrl}, ${descripcionJson}, 'pendiente', true)
     `;
 
+    // Actualizar estado general del TG
+    await sql`UPDATE sistema_tg.tg SET estado = 'enviada' WHERE id = ${tgId}`;
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error(error);
