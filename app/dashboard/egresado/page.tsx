@@ -346,7 +346,30 @@ export default function EgresadoDashboard() {
               )}
 
               {/* PROPUESTAS TEXTO */}
-              {propuestaActiva ? (
+              {tg?.estado === 'en_progreso' ? (
+                <div className="bg-green-50 p-8 rounded-2xl border border-green-200 space-y-4 text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <CheckCircle2 className="text-green-600" size={32} />
+                  </div>
+                  <h3 className="text-2xl font-bold text-green-900">¡Proyecto Aprobado y Activo!</h3>
+                  <p className="text-sm text-green-700 max-w-md mx-auto">Tu tema ha sido dictaminado como favorable y tu Trabajo de Graduación ha dado inicio oficial.</p>
+                  
+                  <div className="bg-white p-6 rounded-xl border border-green-100 shadow-sm mt-6 text-left inline-block w-full max-w-xl">
+                    <p className="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">Título Definitivo Asignado</p>
+                    <p className="text-lg font-bold text-gray-900">{tg.titulo}</p>
+                    
+                    {tg.asesor_id && (
+                      <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-bold text-gray-500 uppercase">Asesor a cargo</p>
+                          <p className="text-sm font-bold text-[#1b263b] mt-0.5">{tg.asesor_nombre || `ID: ${tg.asesor_id}`}</p>
+                        </div>
+                        <span className="bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full font-bold">En seguimiento</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : propuestaActiva ? (
                 <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 space-y-6">
                   <div className="flex items-center justify-between border-b border-gray-200 pb-4">
                     <h3 className="font-bold text-gray-800 flex items-center gap-2">

@@ -27,9 +27,10 @@ export async function GET() {
 
     // Obtener TG activo
     const tgRes = await sql`
-      SELECT t.id, t.titulo, t.estado, t.tipo, te.rol_grupo
+      SELECT t.id, t.titulo, t.estado, t.tipo, te.rol_grupo, t.asesor_id, a.nombre_completo as asesor_nombre
       FROM sistema_tg.tg_egresados te
       JOIN sistema_tg.tg t ON te.tg_id = t.id
+      LEFT JOIN sistema_tg.usuarios a ON t.asesor_id = a.id
       WHERE te.egresado_id = ${userId} AND te.estado_participacion = 'activo'
       LIMIT 1
     `;
