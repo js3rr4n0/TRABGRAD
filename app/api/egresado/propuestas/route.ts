@@ -1,0 +1,119 @@
+import { NextResponse } from 'next/server';
+import sql from '@/lib/db';
+import { auth } from '@/auth';
+import { writeFile } from 'fs/promises';
+import { join } from 'path';
+
+export async function GET() {
+  try {
+    const session = await auth();
+    if (!session || (session.user as any).role !== 'egresado') return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    const userId = parseInt((session.user as any).id);
+
+    // Obtener TG activo
+    const tgRes = await sql`
+      SELECT t.id, t.titulo, t.estado, t.tipo
+      FROM sistema_tg.tg_egresados te
+      JOIN sistema_tg.tg t ON te.tg_id = t.id
+      WHERE te.egresado_id = ${userId} AND te.estado_participacion = 'activo'
+      LIMIT 1
+    `;
+
+    if (tgRes.length === 0) return NextResponse.json({ tg: null });
+
+    const tg = tgRes[0];
+
+    // Obtener propuesta activa
+    const propRes = await sql`
+      SELECT id, descripcion, documento_url, estado, motivo_rechazo
+      FROM sistema_tg.tg_propuestas
+      WHERE tg_id = ${tg.id} AND activa = true
+      LIMIT 1
+    `;
+
+    return NextResponse.json({ tg, propuesta: propRes.length > 0 ? propRes[0] : null });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: 'Error al obtener datos' }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const session = await auth();
+    if (!session || (session.user as any).role !== 'egresado') return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    const userId = parseInt((session.user as any).id);
+
+    const formData = await req.formData();
+    const p1 = formData.get('p1') as string;
+    const p2 = formData.get('p2') as string;
+    const p3 = formData.get('p3') as string;
+    const tipo = formData.get('tipo') as string;
+    const file = formData.get('documento') as File;
+
+    if (!p1 || !p2 || !p3 || !file || !tipo) {
+      return NextResponse.json({ error: 'Todos los campos son obligatorios' }, { status: 400 });
+    }
+
+    // 1. Obtener carrera y facultad del usuario
+    const userRes = await sql`SELECT carrera_id, facultad_id FROM sistema_tg.usuarios WHERE id = ${userId}`;
+    if (userRes.length === 0 || !userRes[0].carrera_id) return NextResponse.json({ error: 'Usuario no tiene carrera asignada' }, { status: 400 });
+    const { carrera_id, facultad_id } = userRes[0];
+
+    // 2. Verificar si ya tiene TG activo
+    let tgId = null;
+    const activeTgRes = await sql`SELECT tg_id FROM sistema_tg.tg_egresados WHERE egresado_id = ${userId} AND estado_participacion = 'activo' LIMIT 1`;
+    
+    if (activeTgRes.length > 0) {
+      tgId = activeTgRes[0].tg_id;
+    } else {
+      // 3. Crear TG nuevo
+      const insertTg = await sql`
+        INSERT INTO sistema_tg.tg (titulo, tipo, estado, carrera_id, facultad_id)
+        VALUES ('Propuesta Inicial', ${tipo}, 'enviada', ${carrera_id}, ${facultad_id})
+        RETURNING id
+      `;
+      tgId = insertTg[0].id;
+
+      // 4. Enlazar estudiante
+      await sql`
+        INSERT INTO sistema_tg.tg_egresados (tg_id, egresado_id, rol_grupo, estado_participacion)
+        VALUES (${tgId}, ${userId}, 'lider', 'activo')
+      `;
+    }
+
+    // 5. Guardar Archivo (Local mock para desarrollo)
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+    const uploadDir = join(process.cwd(), 'public', 'uploads');
+    
+    // Ensure dir exists (simplified for now, Next.js requires manual fs checks if dynamic, but assuming it exists or handled)
+    const filePath = join(uploadDir, fileName);
+    await writeFile(filePath, buffer);
+    const fileUrl = `/uploads/${fileName}`;
+
+    // 6. Insertar Propuesta
+    const descripcionJson = JSON.stringify({ p1, p2, p3 });
+    
+    // Determinar intento (si ya hay historial)
+    const intentosRes = await sql`SELECT COALESCE(MAX(intento_num), 0) as max_intento FROM sistema_tg.tg_propuestas WHERE tg_id = ${tgId}`;
+    const nuevoIntento = intentosRes[0].max_intento + 1;
+    
+    if (nuevoIntento > 3) return NextResponse.json({ error: 'Has alcanzado el límite de 3 intentos.' }, { status: 400 });
+
+    // Desactivar anteriores
+    await sql`UPDATE sistema_tg.tg_propuestas SET activa = false WHERE tg_id = ${tgId}`;
+
+    // Crear nueva
+    await sql`
+      INSERT INTO sistema_tg.tg_propuestas (tg_id, intento_num, documento_url, descripcion, estado, activa)
+      VALUES (${tgId}, ${nuevoIntento}, ${fileUrl}, ${descripcionJson}, 'pendiente', true)
+    `;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+  }
+}

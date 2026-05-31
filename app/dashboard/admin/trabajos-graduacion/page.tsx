@@ -1,6 +1,7 @@
 'use client';
 import { BookOpen, Search, Trash2, Eye, Plus, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 type Trabajo = {
   id: number;
@@ -78,10 +79,10 @@ export default function TrabajosGraduacionPage() {
           </h1>
           <p className="text-gray-500 text-sm mt-1">Gestiona los temas históricos y proyectos activos de los estudiantes.</p>
         </div>
-        <button className="bg-[#1b263b] hover:bg-[#0d1627] text-white px-4 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-sm text-sm">
+        <Link href="/dashboard/admin/trabajos-graduacion/nuevo" className="bg-[#1b263b] hover:bg-[#0d1627] text-white px-4 py-2.5 rounded-xl font-medium transition-colors flex items-center gap-2 shadow-sm text-sm">
           <Plus size={18} />
           <span>Nuevo Registro</span>
-        </button>
+        </Link>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">

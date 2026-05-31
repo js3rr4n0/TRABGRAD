@@ -1,14 +1,92 @@
 'use client';
-import { useState } from 'react';
-import { UploadCloud, Send, FileText, CheckCircle2, MessageSquare, AlertCircle, Paperclip } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { UploadCloud, Send, FileText, CheckCircle2, MessageSquare, AlertCircle, Paperclip, Loader2, Clock } from 'lucide-react';
 
 export default function EgresadoDashboard() {
   const [activeTab, setActiveTab] = useState<'propuestas' | 'comentarios'>('propuestas');
   
-  // State mockups
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [tg, setTg] = useState<any>(null);
+  const [propuestaActiva, setPropuestaActiva] = useState<any>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [propuestas, setPropuestas] = useState({
     p1: '', p2: '', p3: ''
   });
+  const [tipoTg, setTipoTg] = useState('proyecto');
+
+  const fetchTgInfo = async () => {
+    try {
+      const res = await fetch('/api/egresado/propuestas');
+      if (res.ok) {
+        const data = await res.json();
+        setTg(data.tg);
+        setPropuestaActiva(data.propuesta);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTgInfo();
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!propuestas.p1 || !propuestas.p2 || !propuestas.p3 || !file) {
+      return alert('Por favor llena las 3 propuestas y adjunta tu documento de soporte.');
+    }
+
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append('p1', propuestas.p1);
+      formData.append('p2', propuestas.p2);
+      formData.append('p3', propuestas.p3);
+      formData.append('tipo', tipoTg);
+      formData.append('documento', file);
+
+      const res = await fetch('/api/egresado/propuestas', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (res.ok) {
+        alert('Propuestas enviadas correctamente.');
+        fetchTgInfo();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Error al enviar');
+      }
+    } catch (err) {
+      alert('Error de conexión');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="flex justify-center items-center py-20"><Loader2 className="animate-spin text-[#c92a2a]" size={32} /></div>;
+  }
+
+  const estadoVisual = propuestaActiva 
+    ? propuestaActiva.estado === 'pendiente' ? 'Esperando Revisión' : propuestaActiva.estado
+    : 'Redactando Propuestas';
+    
+  let colorEstado = 'bg-yellow-50 border-yellow-200 text-yellow-800';
+  if (propuestaActiva?.estado === 'aprobada') colorEstado = 'bg-green-50 border-green-200 text-green-800';
+  if (propuestaActiva?.estado === 'rechazada') colorEstado = 'bg-red-50 border-red-200 text-red-800';
   
   return (
     <div className="space-y-6">
@@ -18,11 +96,11 @@ export default function EgresadoDashboard() {
           <h1 className="text-2xl font-bold text-[#1b263b]">Mi Trabajo de Graduación</h1>
           <p className="text-gray-500 text-sm mt-1">Sube tus tres propuestas de tema. El coordinador evaluará y seleccionará una.</p>
         </div>
-        <div className="bg-yellow-50 border border-yellow-200 px-4 py-2 rounded-xl flex items-center gap-3">
-          <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full animate-pulse"></div>
+        <div className={`${colorEstado} px-4 py-2 rounded-xl flex items-center gap-3`}>
+          <div className={`w-2.5 h-2.5 rounded-full ${propuestaActiva?.estado === 'pendiente' ? 'bg-yellow-500 animate-pulse' : 'bg-current opacity-70'}`}></div>
           <div>
-            <p className="text-xs font-bold text-yellow-800 uppercase tracking-wider">Estado Actual</p>
-            <p className="text-sm font-semibold text-yellow-900">Redactando Propuestas</p>
+            <p className="text-xs font-bold uppercase tracking-wider opacity-70">Estado Actual</p>
+            <p className="text-sm font-semibold capitalize">{estadoVisual}</p>
           </div>
         </div>
       </div>
@@ -56,47 +134,92 @@ export default function EgresadoDashboard() {
                 <p className="text-sm">Describe brevemente de qué tratará cada propuesta. Adjunta al final un único documento PDF que contenga el desarrollo, justificación y bases de las tres alternativas planteadas.</p>
               </div>
 
-              {/* PROPUESTAS TEXTO */}
-              <div className="space-y-6">
-                {[1, 2, 3].map((num) => (
-                  <div key={num} className="group">
-                    <label className="block text-sm font-bold text-[#1b263b] mb-2 flex items-center gap-2">
-                      <span className="bg-[#1b263b] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">
-                        {num}
-                      </span>
-                      Propuesta de Tema {num}
-                    </label>
-                    <textarea 
-                      placeholder={`Escribe el título y un breve resumen de tu propuesta número ${num}...`}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all min-h-[100px] resize-y group-hover:border-gray-300"
-                    ></textarea>
-                  </div>
-                ))}
-              </div>
-
-              <hr className="border-gray-100" />
-
-              {/* ARCHIVO PDF */}
-              <div>
-                <label className="block text-sm font-bold text-[#1b263b] mb-4 flex items-center gap-2">
-                  <FileText size={18} className="text-[#c92a2a]" />
-                  Documento de Soporte (Único archivo PDF)
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:bg-red-50 hover:border-[#c92a2a] transition-all cursor-pointer group">
-                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm mb-4 group-hover:scale-110 transition-transform">
-                    <UploadCloud size={28} className="text-[#c92a2a]" />
-                  </div>
-                  <h3 className="font-bold text-gray-800 mb-1">Arrastra tu PDF aquí o haz clic</h3>
-                  <p className="text-sm text-gray-500">Tamaño máximo: 10MB</p>
+              {/* TIPO DE TG */}
+              {!tg && (
+                <div>
+                  <label className="block text-sm font-bold text-[#1b263b] mb-2 flex items-center gap-2">¿Qué tipo de trabajo realizarás?</label>
+                  <select 
+                    value={tipoTg} onChange={e => setTipoTg(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a]"
+                  >
+                    <option value="proyecto">Proyecto de Graduación</option>
+                    <option value="pasantia">Pasantía</option>
+                    <option value="investigacion">Trabajo de Investigación (Tesis)</option>
+                  </select>
                 </div>
-              </div>
+              )}
 
-              {/* SUBMIT */}
-              <div className="pt-4 flex justify-end">
-                <button className="bg-[#c92a2a] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-red-500/30 hover:bg-[#a02222] hover:-translate-y-0.5 transition-all flex items-center gap-2">
-                  <Send size={18} /> Enviar Propuestas al Coordinador
-                </button>
-              </div>
+              {/* PROPUESTAS TEXTO */}
+              {propuestaActiva ? (
+                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 space-y-6">
+                  <h3 className="font-bold text-gray-800 flex items-center gap-2 border-b border-gray-200 pb-2">
+                    <CheckCircle2 className="text-green-600" size={20} />
+                  Propuestas Enviadas Exitosamente
+                  </h3>
+                  {propuestaActiva.motivo_rechazo && (
+                    <div className="bg-red-50 text-red-800 p-4 rounded-xl border border-red-200">
+                      <p className="font-bold text-sm mb-1">Motivo de Rechazo:</p>
+                      <p className="text-sm">{propuestaActiva.motivo_rechazo}</p>
+                    </div>
+                  )}
+                  <p className="text-sm text-gray-600">Has enviado tus propuestas. Por favor, espera a que el coordinador las revise y emita una resolución en la sección de comentarios.</p>
+                  <div className="flex items-center gap-2 bg-white p-4 rounded-xl border border-gray-200">
+                    <FileText className="text-gray-400" />
+                    <a href={propuestaActiva.documento_url} target="_blank" className="text-blue-600 font-bold hover:underline text-sm">Ver Documento Soporte PDF</a>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  <div className="space-y-6">
+                    {[1, 2, 3].map((num) => (
+                      <div key={num} className="group">
+                        <label className="block text-sm font-bold text-[#1b263b] mb-2 flex items-center gap-2">
+                          <span className="bg-[#1b263b] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">
+                            {num}
+                          </span>
+                          Propuesta de Tema {num}
+                        </label>
+                        <textarea 
+                          required
+                          value={(propuestas as any)[`p${num}`]}
+                          onChange={(e) => setPropuestas({...propuestas, [`p${num}`]: e.target.value})}
+                          placeholder={`Escribe el título y un breve resumen de tu propuesta número ${num}...`}
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all min-h-[100px] resize-y group-hover:border-gray-300"
+                        ></textarea>
+                      </div>
+                    ))}
+                  </div>
+
+                  <hr className="border-gray-100" />
+
+                  {/* ARCHIVO PDF */}
+                  <div>
+                    <label className="block text-sm font-bold text-[#1b263b] mb-4 flex items-center gap-2">
+                      <FileText size={18} className="text-[#c92a2a]" />
+                      Documento de Soporte (Único archivo PDF)
+                    </label>
+                    <input type="file" ref={fileInputRef} className="hidden" accept=".pdf" onChange={handleFileChange} />
+                    <div 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:bg-red-50 hover:border-[#c92a2a] transition-all cursor-pointer group bg-gray-50/50"
+                    >
+                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm mb-4 group-hover:scale-110 transition-transform">
+                        {file ? <FileText size={28} className="text-[#c92a2a]" /> : <UploadCloud size={28} className="text-gray-400 group-hover:text-[#c92a2a]" />}
+                      </div>
+                      <h3 className="font-bold text-gray-800 mb-1">{file ? file.name : 'Arrastra tu PDF aquí o haz clic'}</h3>
+                      <p className="text-sm text-gray-500">{file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Tamaño máximo: 10MB'}</p>
+                    </div>
+                  </div>
+
+                  {/* SUBMIT */}
+                  <div className="pt-4 flex justify-end">
+                    <button disabled={submitting} type="submit" className="bg-[#c92a2a] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-red-500/30 hover:bg-[#a02222] hover:-translate-y-0.5 transition-all flex items-center gap-2 disabled:opacity-50">
+                      {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />} 
+                      {submitting ? 'Enviando...' : 'Enviar Propuestas al Coordinador'}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           ) : (
             /* TAB DE COMENTARIOS */

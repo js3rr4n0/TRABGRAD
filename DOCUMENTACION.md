@@ -133,5 +133,10 @@ Este archivo documenta los cambios realizados en el proyecto y sirve como regist
   - Se habilitó la opción `temas_historicos.csv` en `/dashboard/admin/carga-masiva`.
   - Columnas esperadas actualizadas: Se reemplazaron `fecha_envio` y `fecha_aprobacion` por un campo `estudiantes_carnets`. Este campo permite subir múltiples carnets separados por comas.
   - La ruta POST (`/api/admin/carga-masiva`) realiza la creación del TG y, mediante un bucle, busca a los alumnos por carnet y los enlaza automáticamente creando las filas correspondientes en `tg_egresados` en estado 'finalizado' e 'integrante'.
+- **Panel del Egresado Funcional**:
+  - Se construyó toda la UI en `/dashboard/egresado` y su propio `layout.tsx` para un entorno aislado del panel de administrador.
+  - Se creó el endpoint `GET /api/egresado/propuestas` para verificar si el alumno ya tiene un Trabajo de Graduación asignado o propuestas en curso.
+  - Se implementó `POST /api/egresado/propuestas` (soportando subida `multipart/form-data`) que permite al estudiante subir 3 propuestas de texto, el tipo de proyecto (Proyecto/Tesis/Pasantía) y 1 archivo PDF de justificación en una sola acción.
+  - Automáticamente, si el alumno no tenía proyecto, el backend crea un TG nuevo en estado "enviada", lo enlaza como 'lider' en `tg_egresados` (buscando su carrera y facultad base) e inserta el intento 1 en `tg_propuestas`.
 
 
