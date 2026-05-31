@@ -167,3 +167,12 @@ Este archivo documenta los cambios realizados en el proyecto y sirve como regist
 - **Parches Técnicos y Estabilidad**:
   - Actualización global a `Next.js 15+ Async Params` en las rutas de API dinámicas (`[id]`) para asegurar compatibilidad con la estructura estricta `Promise<{ id: string }>` requerida por el entorno de compilación de Vercel.
   - Script manual ejecutado (`fix_borrador.ts`) para sincronizar el estado antiguo de proyectos que se habían quedado huérfanos entre las fases de validación de base de datos.
+- **Asignación de Asesor y Carga de Trabajo (Workload)**:
+  - En la vista de administrador, se implementó un botón para asignar un Asesor a los proyectos que ya están "En progreso".
+  - Se añadió una consulta dinámica (`COUNT(*)`) a la BD para mostrar en tiempo real la cantidad de proyectos activos que tiene cada asesor, previniendo sobrecargas de trabajo.
+- **Actualización de Interfaz del Egresado Post-Dictamen**:
+  - Se rediseñó el dashboard del alumno cuando el proyecto es aprobado (`tg.estado === 'en_progreso'`).
+  - En lugar de mantener el letrero de revisión, aparece un panel de éxito verde ("¡Proyecto Aprobado y Activo!") que muestra el Título Definitivo otorgado y, de existir, el nombre del Asesor a cargo del seguimiento.
+- **Correcciones Estrictas de Base de Datos**:
+  - Se corrigió el error `violates check constraint "chk_propuesta_fecha_resolucion"` garantizando que, al aprobar o rechazar una propuesta desde el dashboard administrativo, el campo `fecha_resolucion` reciba un timestamp actual de PostgreSQL, cumpliendo con la integridad de la base de datos.
+  - Se incorporó una validación extra de `maxLength={255}` para prevenir caídas de servidor si el administrador insertaba un título mayor a la columna de la base de datos, manejando el error mediante un mensaje `inline` amigable.
