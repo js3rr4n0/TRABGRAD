@@ -69,7 +69,8 @@ export async function POST(req: Request) {
           VALUES (${fileName}, ${file.type}, ${buffer})
           RETURNING id
         `;
-        fileUrl = `/api/archivos/${uploadRes[0].id}`;
+        const ext = fileName.split('.').pop();
+        fileUrl = `/api/archivos/${uploadRes[0].id}?ext=.${ext}`;
       } catch (fsError) {
         console.error('Error guardando archivo de comentario en DB', fsError);
         return NextResponse.json({ error: 'Error al subir el archivo adjunto' }, { status: 500 });
