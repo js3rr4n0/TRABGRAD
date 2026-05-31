@@ -556,7 +556,6 @@ export default function EgresadoDashboard() {
             <ul className="text-sm text-gray-300 space-y-2 relative z-10 list-disc pl-4 mt-4">
               <li>Innovación y aplicabilidad técnica.</li>
               <li>Justificación metodológica clara.</li>
-              <li>Cumplimiento de 300 hrs (Pasantía) o entregables completos (Proyecto).</li>
             </ul>
           </div>
         </div>
