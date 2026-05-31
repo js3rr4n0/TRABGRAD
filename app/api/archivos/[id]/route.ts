@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import sql from '@/lib/db';
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = parseInt(params.id);
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
     if (isNaN(id)) return new NextResponse('ID inválido', { status: 400 });
 
     const res = await sql`SELECT nombre, tipo_mime, datos FROM sistema_tg.archivos WHERE id = ${id} LIMIT 1`;
