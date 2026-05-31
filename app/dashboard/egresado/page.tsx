@@ -12,6 +12,11 @@ export default function EgresadoDashboard() {
   const [equipo, setEquipo] = useState<any[]>([]);
   const [invitacion, setInvitacion] = useState<any>(null);
   
+  // Estados para el Modal de Invitación
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteCarnet, setInviteCarnet] = useState('');
+  const [inviting, setInviting] = useState(false);
+  
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -81,23 +86,31 @@ export default function EgresadoDashboard() {
     }
   };
 
-  const handleInvite = async () => {
-    const carnet = prompt('Ingresa el carnet del estudiante a invitar:');
-    if (!carnet) return;
+  const handleInvite = () => {
+    setInviteCarnet('');
+    setShowInviteModal(true);
+  };
+
+  const submitInvite = async () => {
+    if (!inviteCarnet.trim()) return;
+    setInviting(true);
     try {
       const res = await fetch('/api/egresado/invitaciones', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ carnet: carnet.toUpperCase(), tipo: tipoTg })
+        body: JSON.stringify({ carnet: inviteCarnet.trim().toUpperCase(), tipo: tipoTg })
       });
       if (res.ok) {
         alert('Invitación enviada');
+        setShowInviteModal(false);
         fetchTgInfo();
       } else {
         alert((await res.json()).error);
       }
     } catch (err) {
       alert('Error de red');
+    } finally {
+      setInviting(false);
     }
   };
 
@@ -408,6 +421,54 @@ export default function EgresadoDashboard() {
           </div>
         </div>
       </div>
+
+      {/* MODAL DE INVITACIÓN */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 mb-4 border-b border-gray-100 pb-4">
+              <div className="w-10 h-10 bg-red-50 text-[#c92a2a] rounded-full flex items-center justify-center">
+                <Users size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-800 text-lg leading-tight">Invitar Integrante</h3>
+                <p className="text-xs text-gray-500">Añade a un compañero a tu proyecto</p>
+              </div>
+            </div>
+            
+            <div className="mb-6 space-y-2">
+              <label className="block text-sm font-bold text-gray-700">Carnet del Estudiante</label>
+              <input 
+                type="text" 
+                value={inviteCarnet}
+                onChange={(e) => setInviteCarnet(e.target.value)}
+                placeholder="Ej. 2019TM602"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] uppercase transition-all"
+                autoFocus
+              />
+              <p className="text-xs text-gray-400 mt-1">El estudiante debe estar registrado y no tener un proyecto activo.</p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setShowInviteModal(false)}
+                className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors"
+                disabled={inviting}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={submitInvite}
+                disabled={!inviteCarnet.trim() || inviting}
+                className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-[#1b263b] hover:bg-[#0d1627] shadow-sm disabled:opacity-50 transition-colors flex items-center gap-2"
+              >
+                {inviting && <Loader2 size={16} className="animate-spin" />}
+                Enviar Invitación
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
