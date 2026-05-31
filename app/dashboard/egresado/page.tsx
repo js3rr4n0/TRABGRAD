@@ -9,6 +9,9 @@ export default function EgresadoDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [tg, setTg] = useState<any>(null);
   const [propuestaActiva, setPropuestaActiva] = useState<any>(null);
+  const [equipo, setEquipo] = useState<any[]>([]);
+  const [invitacion, setInvitacion] = useState<any>(null);
+
   // Estados para notificaciones UI
   const [globalError, setGlobalError] = useState('');
   const [globalSuccess, setGlobalSuccess] = useState('');
