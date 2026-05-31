@@ -8,20 +8,20 @@ export default async function EgresadoLayout({ children }: { children: React.Rea
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex flex-col font-sans">
       {/* Top Navigation */}
-      <header className="bg-[#1b263b] text-white shadow-md sticky top-0 z-50">
+      <header className="bg-[#c92a2a] text-white shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#c92a2a] flex items-center justify-center text-white shadow-lg">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white shadow-sm">
                 <GraduationCap size={22} />
               </div>
-              <span className="text-xl font-bold tracking-wide">TRAB<span className="text-[#c92a2a]">GRAD</span></span>
+              <span className="text-xl font-bold tracking-wide">TRABGRAD</span>
             </div>
             
             <div className="flex items-center gap-6">
-              <button className="relative text-gray-300 hover:text-white transition-colors">
+              <button className="relative text-white/80 hover:text-white transition-colors">
                 <Bell size={20} />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#c92a2a] rounded-full"></span>
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-[#c92a2a]"></span>
               </button>
               
               <div className="flex items-center gap-3 pl-6 border-l border-gray-700">
