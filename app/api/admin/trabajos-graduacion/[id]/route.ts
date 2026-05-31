@@ -89,6 +89,10 @@ export async function PUT(req: Request, props: { params: Promise<{ id: string }>
     const { action, motivo_rechazo, titulo_aprobado } = body;
 
     if (action === 'approve') {
+      if (titulo_aprobado && titulo_aprobado.length > 255) {
+        return NextResponse.json({ error: 'El título definitivo no puede tener más de 255 caracteres. Por favor, resúmelo.' }, { status: 400 });
+      }
+
       await sql`UPDATE sistema_tg.tg_propuestas SET estado = 'aprobada' WHERE tg_id = ${tgId} AND activa = true`;
       await sql`
         UPDATE sistema_tg.tg 

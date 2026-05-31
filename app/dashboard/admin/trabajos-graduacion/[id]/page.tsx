@@ -31,6 +31,7 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
   
   const [tituloAprobado, setTituloAprobado] = useState('');
   const [motivoRechazo, setMotivoRechazo] = useState('');
+  const [modalError, setModalError] = useState('');
 
   const fetchDetails = async () => {
     try {
@@ -110,12 +111,14 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
       if (res.ok) {
         setShowApprove(false);
         setShowReject(false);
+        setModalError('');
         fetchDetails(); // Reload state
       } else {
-        alert('Error al procesar la solicitud');
+        const errorData = await res.json();
+        setModalError(errorData.error || 'Error al procesar la solicitud');
       }
     } catch(err) {
-      alert('Error de conexión');
+      setModalError('Error de conexión');
     } finally {
       setActionLoading(false);
     }
@@ -344,12 +347,16 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
             <h3 className="text-xl font-bold text-gray-900 mb-2">Aprobar Proyecto</h3>
             <p className="text-sm text-gray-500 mb-6">El título seleccionado será el título definitivo del proyecto. Puedes editarlo libremente.</p>
             
-            <label className="block text-sm font-bold text-gray-700 mb-2">Título Definitivo del Proyecto</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Título Definitivo del Proyecto (Max 255 caracteres)</label>
             <textarea 
               value={tituloAprobado}
-              onChange={e => setTituloAprobado(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-900 focus:outline-none focus:border-green-500 min-h-[100px]"
+              onChange={e => { setTituloAprobado(e.target.value); setModalError(''); }}
+              maxLength={255}
+              className={`w-full bg-gray-50 border rounded-xl p-3 text-sm text-gray-900 focus:outline-none min-h-[100px] ${modalError ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-green-500'}`}
             />
+            <p className="text-right text-xs text-gray-400 mt-1">{tituloAprobado.length}/255</p>
+
+            {modalError && <p className="text-red-600 text-sm font-bold mt-2 text-center bg-red-50 py-2 rounded-lg">{modalError}</p>}
 
             <div className="flex gap-3 mt-6">
               <button onClick={() => setShowApprove(false)} className="flex-1 py-2.5 rounded-xl font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
@@ -371,10 +378,12 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
             <label className="block text-sm font-bold text-gray-700 mb-2">Motivo del rechazo (Feedback)</label>
             <textarea 
               value={motivoRechazo}
-              onChange={e => setMotivoRechazo(e.target.value)}
+              onChange={e => { setMotivoRechazo(e.target.value); setModalError(''); }}
               placeholder="Ej. Las propuestas no cumplen con el alcance mínimo..."
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-900 focus:outline-none focus:border-red-500 min-h-[100px]"
+              className={`w-full bg-gray-50 border rounded-xl p-3 text-sm text-gray-900 focus:outline-none min-h-[100px] ${modalError ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-red-500'}`}
             />
+
+            {modalError && <p className="text-red-600 text-sm font-bold mt-2 text-center bg-red-50 py-2 rounded-lg">{modalError}</p>}
 
             <div className="flex gap-3 mt-6">
               <button onClick={() => setShowReject(false)} className="flex-1 py-2.5 rounded-xl font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
