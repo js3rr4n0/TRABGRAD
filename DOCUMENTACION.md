@@ -149,5 +149,9 @@ Este archivo documenta los cambios realizados en el proyecto y sirve como regist
   - Se creó la tabla `sistema_tg.tg_comentarios` para guardar el historial ordenado por fecha.
   - La API genérica (`/api/comentarios`) permite adjuntar archivos (fotos o documentos) junto con los mensajes.
   - El diseño diferencia visualmente los mensajes enviados por el egresado (a la derecha en rojo) de los enviados por coordinadores, asesores u otros compañeros (a la izquierda en blanco/azul).
+- **Gestor de Archivos Inteligente (Vercel-Proof)**:
+  - Dado que Vercel utiliza un sistema de archivos de solo lectura en producción, se desarrolló un sistema para guardar archivos PDF e Imágenes nativamente dentro de la base de datos PostgreSQL de Neon usando el tipo de dato `BYTEA`.
+  - Se creó la tabla `sistema_tg.archivos` para almacenar el binario, el nombre y el tipo MIME.
+  - Se habilitó la ruta dinámica `GET /api/archivos/[id]` para servir estos binarios en tiempo real al usuario de la misma forma que un enlace directo, permitiendo previsualizaciones completas y descargas sin servicios externos.
 
 

@@ -64,14 +64,15 @@ export async function POST(req: Request) {
       const buffer = Buffer.from(bytes);
       const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
       try {
-        const uploadDir = join(process.cwd(), 'public', 'uploads');
-        await import('fs/promises').then(fs => fs.mkdir(uploadDir, { recursive: true }).catch(() => {}));
-        const filePath = join(uploadDir, fileName);
-        await writeFile(filePath, buffer);
-        fileUrl = `/uploads/${fileName}`;
+        const uploadRes = await sql`
+          INSERT INTO sistema_tg.archivos (nombre, tipo_mime, datos)
+          VALUES (${fileName}, ${file.type}, ${buffer})
+          RETURNING id
+        `;
+        fileUrl = `/api/archivos/${uploadRes[0].id}`;
       } catch (fsError) {
-        console.warn('Fallback por Vercel FS', fsError);
-        fileUrl = `/#mock-file-${fileName}`;
+        console.error('Error guardando archivo de comentario en DB', fsError);
+        return NextResponse.json({ error: 'Error al subir el archivo adjunto' }, { status: 500 });
       }
     }
 

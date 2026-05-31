@@ -105,22 +105,22 @@ export async function POST(req: Request) {
       `;
     }
 
-    // 5. Guardar Archivo (Fallback para Vercel Read-Only FS)
+    // 5. Guardar Archivo en Base de Datos
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
     let fileUrl = '';
     
     try {
-      const uploadDir = join(process.cwd(), 'public', 'uploads');
-      // Intentar crear la carpeta si no existe (solo funcionará en local)
-      await import('fs/promises').then(fs => fs.mkdir(uploadDir, { recursive: true }).catch(() => {}));
-      const filePath = join(uploadDir, fileName);
-      await writeFile(filePath, buffer);
-      fileUrl = `/uploads/${fileName}`;
+      const uploadRes = await sql`
+        INSERT INTO sistema_tg.archivos (nombre, tipo_mime, datos)
+        VALUES (${fileName}, ${file.type}, ${buffer})
+        RETURNING id
+      `;
+      fileUrl = `/api/archivos/${uploadRes[0].id}`;
     } catch (fsError) {
-      console.warn('No se pudo guardar el archivo localmente (probablemente entorno Vercel). Usando mock URL.', fsError);
-      fileUrl = `/#mock-file-${fileName}`; // Mock URL para evitar romper el flujo
+      console.error('Error guardando archivo en DB', fsError);
+      return NextResponse.json({ error: 'Error al subir el archivo' }, { status: 500 });
     }
 
     // 6. Insertar Propuesta
