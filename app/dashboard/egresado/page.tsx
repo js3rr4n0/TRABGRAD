@@ -33,6 +33,7 @@ export default function EgresadoDashboard() {
   const comentarioFileInputRef = useRef<HTMLInputElement>(null);
   const [enviandoComentario, setEnviandoComentario] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [nuevosMensajesCount, setNuevosMensajesCount] = useState(0);
 
   const [propuestas, setPropuestas] = useState({
     p1: '', p2: '', p3: ''
@@ -66,6 +67,16 @@ export default function EgresadoDashboard() {
       if (res.ok) {
         const data = await res.json();
         setComentarios(data);
+        
+        // Calcular mensajes nuevos
+        const lastViewed = localStorage.getItem(`chat_last_viewed_${tg_id}`);
+        if (lastViewed) {
+          const lastViewedTime = parseInt(lastViewed);
+          const nuevos = data.filter((m: any) => new Date(m.creado_en).getTime() > lastViewedTime && m.rol !== 'egresado');
+          setNuevosMensajesCount(nuevos.length);
+        } else if (data.length > 0) {
+          setNuevosMensajesCount(data.filter((m: any) => m.rol !== 'egresado').length);
+        }
       }
     } catch(err) {
       console.error(err);
@@ -76,7 +87,12 @@ export default function EgresadoDashboard() {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [comentarios, activeTab]);
+    
+    if (activeTab === 'comentarios' && tg?.id) {
+      localStorage.setItem(`chat_last_viewed_${tg.id}`, Date.now().toString());
+      setNuevosMensajesCount(0);
+    }
+  }, [comentarios, activeTab, tg]);
 
   useEffect(() => {
     fetchTgInfo();
@@ -284,7 +300,12 @@ export default function EgresadoDashboard() {
               onClick={() => setActiveTab('comentarios')}
               className={`pb-3 px-1 font-bold text-sm transition-colors border-b-2 flex items-center gap-2 ${activeTab === 'comentarios' ? 'border-[#c92a2a] text-[#c92a2a]' : 'border-transparent text-gray-500 hover:text-gray-800'}`}
             >
-              Foro y Comentarios <span className="bg-[#c92a2a] text-white text-[10px] px-2 py-0.5 rounded-full">2 Nuevos</span>
+              Foro y Comentarios 
+              {nuevosMensajesCount > 0 && (
+                <span className="bg-[#c92a2a] text-white text-[10px] px-2 py-0.5 rounded-full animate-pulse">
+                  {nuevosMensajesCount} Nuevos
+                </span>
+              )}
             </button>
           </div>
 

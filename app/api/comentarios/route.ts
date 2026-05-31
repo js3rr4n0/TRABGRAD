@@ -11,8 +11,15 @@ export async function GET(req: Request) {
     
     const { searchParams } = new URL(req.url);
     const tg_id = searchParams.get('tg_id');
+    const userId = parseInt((session.user as any).id);
     
     if (!tg_id) return NextResponse.json({ error: 'Falta tg_id' }, { status: 400 });
+
+    // Validar acceso (si es egresado, debe pertenecer al TG)
+    if ((session.user as any).role === 'egresado') {
+      const authCheck = await sql`SELECT 1 FROM sistema_tg.tg_egresados WHERE tg_id = ${tg_id} AND egresado_id = ${userId} AND estado_participacion != 'retirado' LIMIT 1`;
+      if (authCheck.length === 0) return NextResponse.json({ error: 'No tienes acceso a este proyecto' }, { status: 403 });
+    }
 
     // Fetch comentarios
     const comentarios = await sql`
@@ -43,6 +50,12 @@ export async function POST(req: Request) {
 
     if (!tg_id || (!mensaje && !file)) {
       return NextResponse.json({ error: 'Mensaje o archivo requerido' }, { status: 400 });
+    }
+
+    // Validar acceso
+    if ((session.user as any).role === 'egresado') {
+      const authCheck = await sql`SELECT 1 FROM sistema_tg.tg_egresados WHERE tg_id = ${tg_id} AND egresado_id = ${userId} AND estado_participacion != 'retirado' LIMIT 1`;
+      if (authCheck.length === 0) return NextResponse.json({ error: 'No tienes acceso a este proyecto' }, { status: 403 });
     }
 
     let fileUrl = null;
