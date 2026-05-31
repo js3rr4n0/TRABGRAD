@@ -138,5 +138,10 @@ Este archivo documenta los cambios realizados en el proyecto y sirve como regist
   - Se creó el endpoint `GET /api/egresado/propuestas` para verificar si el alumno ya tiene un Trabajo de Graduación asignado o propuestas en curso.
   - Se implementó `POST /api/egresado/propuestas` (soportando subida `multipart/form-data`) que permite al estudiante subir 3 propuestas de texto, el tipo de proyecto (Proyecto/Tesis/Pasantía) y 1 archivo PDF de justificación en una sola acción.
   - Automáticamente, si el alumno no tenía proyecto, el backend crea un TG nuevo en estado "enviada", lo enlaza como 'lider' en `tg_egresados` (buscando su carrera y facultad base) e inserta el intento 1 en `tg_propuestas`.
+- **Sistema de Equipos e Invitaciones (Egresados)**:
+  - Se añadió la capacidad de formar equipos (hasta 3 estudiantes).
+  - El alumno líder puede hacer clic en "Invitar Integrante", ingresar el carnet de un compañero, y la API (`POST /api/egresado/invitaciones`) validará al usuario y le creará una invitación pendiente en la tabla `tg_egresados`.
+  - Cuando el compañero inicie sesión, en lugar del dashboard normal, verá una pantalla de alerta indicando que fue invitado al proyecto, con opciones para "Aceptar" o "Rechazar" (`PUT /api/egresado/invitaciones`).
+  - Al aceptar, ambos visualizarán exactamente el mismo dashboard, con el mismo historial de propuestas y comentarios, y el panel lateral mostrará al equipo completo con sus carnets y roles (Líder / Integrante).
 
 

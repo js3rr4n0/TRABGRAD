@@ -10,9 +10,24 @@ export async function GET() {
     if (!session || (session.user as any).role !== 'egresado') return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     const userId = parseInt((session.user as any).id);
 
+    // Revisar si tiene invitaciones
+    const invRes = await sql`
+      SELECT t.id as tg_id, t.titulo, u.nombre_completo as lider_nombre
+      FROM sistema_tg.tg_egresados te
+      JOIN sistema_tg.tg t ON te.tg_id = t.id
+      JOIN sistema_tg.tg_egresados tel ON tel.tg_id = t.id AND tel.rol_grupo = 'lider'
+      JOIN sistema_tg.usuarios u ON tel.egresado_id = u.id
+      WHERE te.egresado_id = ${userId} AND te.estado_participacion = 'invitado'
+      LIMIT 1
+    `;
+
+    if (invRes.length > 0) {
+      return NextResponse.json({ tg: null, invitacion: invRes[0] });
+    }
+
     // Obtener TG activo
     const tgRes = await sql`
-      SELECT t.id, t.titulo, t.estado, t.tipo
+      SELECT t.id, t.titulo, t.estado, t.tipo, te.rol_grupo
       FROM sistema_tg.tg_egresados te
       JOIN sistema_tg.tg t ON te.tg_id = t.id
       WHERE te.egresado_id = ${userId} AND te.estado_participacion = 'activo'
@@ -31,7 +46,15 @@ export async function GET() {
       LIMIT 1
     `;
 
-    return NextResponse.json({ tg, propuesta: propRes.length > 0 ? propRes[0] : null });
+    // Obtener equipo
+    const equipoRes = await sql`
+      SELECT u.id, u.nombre_completo, u.carnet, te.rol_grupo, te.estado_participacion
+      FROM sistema_tg.tg_egresados te
+      JOIN sistema_tg.usuarios u ON te.egresado_id = u.id
+      WHERE te.tg_id = ${tg.id}
+    `;
+
+    return NextResponse.json({ tg, propuesta: propRes.length > 0 ? propRes[0] : null, equipo: equipoRes });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Error al obtener datos' }, { status: 500 });

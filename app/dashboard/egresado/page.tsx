@@ -1,6 +1,5 @@
-'use client';
 import { useState, useEffect, useRef } from 'react';
-import { UploadCloud, Send, FileText, CheckCircle2, MessageSquare, AlertCircle, Paperclip, Loader2, Clock } from 'lucide-react';
+import { UploadCloud, Send, FileText, CheckCircle2, MessageSquare, AlertCircle, Paperclip, Loader2, Clock, Users } from 'lucide-react';
 
 export default function EgresadoDashboard() {
   const [activeTab, setActiveTab] = useState<'propuestas' | 'comentarios'>('propuestas');
@@ -9,6 +8,9 @@ export default function EgresadoDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [tg, setTg] = useState<any>(null);
   const [propuestaActiva, setPropuestaActiva] = useState<any>(null);
+  const [equipo, setEquipo] = useState<any[]>([]);
+  const [invitacion, setInvitacion] = useState<any>(null);
+  
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -24,6 +26,8 @@ export default function EgresadoDashboard() {
         const data = await res.json();
         setTg(data.tg);
         setPropuestaActiva(data.propuesta);
+        setEquipo(data.equipo || []);
+        setInvitacion(data.invitacion || null);
       }
     } catch (err) {
       console.error(err);
@@ -76,8 +80,67 @@ export default function EgresadoDashboard() {
     }
   };
 
+  const handleInvite = async () => {
+    const carnet = prompt('Ingresa el carnet del estudiante a invitar:');
+    if (!carnet) return;
+    try {
+      const res = await fetch('/api/egresado/invitaciones', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ carnet: carnet.toUpperCase(), tipo: tipoTg })
+      });
+      if (res.ok) {
+        alert('Invitación enviada');
+        fetchTgInfo();
+      } else {
+        alert((await res.json()).error);
+      }
+    } catch (err) {
+      alert('Error de red');
+    }
+  };
+
+  const handleInvitationReply = async (action: 'accept' | 'reject') => {
+    try {
+      const res = await fetch('/api/egresado/invitaciones', {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ action, tg_id: invitacion.tg_id })
+      });
+      if (res.ok) {
+        setInvitacion(null);
+        fetchTgInfo();
+      } else {
+        alert((await res.json()).error);
+      }
+    } catch(err) {
+      alert('Error de red');
+    }
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center py-20"><Loader2 className="animate-spin text-[#c92a2a]" size={32} /></div>;
+  }
+
+  if (invitacion) {
+    return (
+      <div className="max-w-2xl mx-auto mt-10 bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center space-y-6">
+        <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto">
+          <Users size={32} />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-[#1b263b] mb-2">¡Tienes una invitación!</h2>
+          <p className="text-gray-600">
+            <strong>{invitacion.lider_nombre}</strong> te ha invitado a formar parte de su Trabajo de Graduación: <br/>
+            <span className="italic text-gray-500">"{invitacion.titulo}"</span>
+          </p>
+        </div>
+        <div className="flex justify-center gap-4 pt-4 border-t border-gray-100">
+          <button onClick={() => handleInvitationReply('reject')} className="px-6 py-2.5 rounded-xl font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-colors">Rechazar</button>
+          <button onClick={() => handleInvitationReply('accept')} className="px-6 py-2.5 rounded-xl font-bold text-white bg-green-600 hover:bg-green-700 transition-colors shadow-lg shadow-green-500/30">Aceptar Invitación</button>
+        </div>
+      </div>
+    );
   }
 
   const estadoVisual = propuestaActiva 
@@ -295,21 +358,39 @@ export default function EgresadoDashboard() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 className="font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">Información del Grupo</h3>
             <ul className="space-y-4">
-              <li className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center font-bold text-xs text-gray-500">TÚ</div>
-                <div>
-                  <p className="text-sm font-bold text-[#1b263b]">Tú (Egresado Lider)</p>
-                  <p className="text-xs text-gray-500">AA00123</p>
-                </div>
-              </li>
-              {/* Ejemplo si hay compañeros */}
-              <li className="flex items-center gap-3 opacity-60">
-                <div className="w-8 h-8 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center text-gray-400">+</div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Sin compañero asignado</p>
-                  <p className="text-xs text-[#c92a2a] cursor-pointer hover:underline">Invitar Integrante</p>
-                </div>
-              </li>
+              {equipo.length > 0 ? equipo.map(miembro => (
+                <li key={miembro.id} className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${miembro.estado_participacion === 'invitado' ? 'bg-yellow-50 text-yellow-600 border border-yellow-200' : 'bg-gray-100 text-gray-500'}`}>
+                    {miembro.nombre_completo.substring(0,2).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#1b263b] flex items-center gap-2">
+                      {miembro.nombre_completo}
+                      {miembro.rol_grupo === 'lider' && <span className="bg-blue-100 text-blue-700 text-[9px] px-1.5 py-0.5 rounded uppercase">Líder</span>}
+                    </p>
+                    <p className="text-xs text-gray-500">{miembro.carnet} {miembro.estado_participacion === 'invitado' && '(Invitación Pendiente)'}</p>
+                  </div>
+                </li>
+              )) : (
+                <li className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center font-bold text-xs text-gray-500">TÚ</div>
+                  <div>
+                    <p className="text-sm font-bold text-[#1b263b]">Tú (Egresado Lider)</p>
+                    <p className="text-xs text-gray-500">Sin guardar aún</p>
+                  </div>
+                </li>
+              )}
+              
+              {/* Botón Invitar */}
+              {!tg || equipo.length < 3 ? (
+                <li className="flex items-center gap-3 opacity-80 hover:opacity-100 transition-opacity">
+                  <div className="w-8 h-8 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center text-gray-400">+</div>
+                  <div>
+                    <button onClick={handleInvite} className="text-sm font-medium text-[#c92a2a] hover:underline">Invitar Integrante</button>
+                    <p className="text-[10px] text-gray-500">Con su número de carnet</p>
+                  </div>
+                </li>
+              ) : null}
             </ul>
           </div>
 
