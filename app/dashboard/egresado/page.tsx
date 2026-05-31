@@ -1,3 +1,4 @@
+'use client';
 import { useState, useEffect, useRef } from 'react';
 import { UploadCloud, Send, FileText, CheckCircle2, MessageSquare, AlertCircle, Paperclip, Loader2, Clock, Users } from 'lucide-react';
 
