@@ -64,10 +64,19 @@ export async function GET(req: Request, props: { params: Promise<{ id: string }>
       WHERE tg_id = ${tgId} AND activa = true
     `;
 
+    // Obtener asesores disponibles y su carga de trabajo activa
+    const asesores = await sql`
+      SELECT u.id, u.nombre_completo, 
+      (SELECT COUNT(*) FROM sistema_tg.tg WHERE asesor_id = u.id AND estado = 'en_progreso') as tg_activos 
+      FROM sistema_tg.usuarios u 
+      WHERE u.rol = 'asesor' AND u.activo = true
+    `;
+
     return NextResponse.json({
       tg,
       equipo,
-      propuesta: propuesta.length > 0 ? propuesta[0] : null
+      propuesta: propuesta.length > 0 ? propuesta[0] : null,
+      asesores
     });
 
   } catch (error) {
@@ -86,7 +95,7 @@ export async function PUT(req: Request, props: { params: Promise<{ id: string }>
 
     const tgId = parseInt(params.id);
     const body = await req.json();
-    const { action, motivo_rechazo, titulo_aprobado } = body;
+    const { action, motivo_rechazo, titulo_aprobado, asesor_id } = body;
 
     if (action === 'approve') {
       if (titulo_aprobado && titulo_aprobado.length > 255) {
@@ -102,6 +111,9 @@ export async function PUT(req: Request, props: { params: Promise<{ id: string }>
     } else if (action === 'reject') {
       await sql`UPDATE sistema_tg.tg_propuestas SET estado = 'rechazada', motivo_rechazo = ${motivo_rechazo}, fecha_resolucion = CURRENT_TIMESTAMP WHERE tg_id = ${tgId} AND activa = true`;
       await sql`UPDATE sistema_tg.tg SET estado = 'borrador' WHERE id = ${tgId}`;
+    } else if (action === 'assign_advisor') {
+      if (!asesor_id) return NextResponse.json({ error: 'Debes seleccionar un asesor válido' }, { status: 400 });
+      await sql`UPDATE sistema_tg.tg SET asesor_id = ${asesor_id} WHERE id = ${tgId}`;
     }
 
     return NextResponse.json({ success: true });

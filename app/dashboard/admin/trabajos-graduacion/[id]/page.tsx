@@ -13,6 +13,7 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
   const [tg, setTg] = useState<any>(null);
   const [equipo, setEquipo] = useState<any[]>([]);
   const [propuesta, setPropuesta] = useState<any>(null);
+  const [asesores, setAsesores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'propuestas'|'comentarios'>('propuestas');
 
@@ -24,13 +25,15 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
   const [enviandoComentario, setEnviandoComentario] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  // Estados para modales de aprobación/rechazo
+  // Estados para modales de aprobación/rechazo/asignar
   const [actionLoading, setActionLoading] = useState(false);
   const [showApprove, setShowApprove] = useState(false);
   const [showReject, setShowReject] = useState(false);
+  const [showAssign, setShowAssign] = useState(false);
   
   const [tituloAprobado, setTituloAprobado] = useState('');
   const [motivoRechazo, setMotivoRechazo] = useState('');
+  const [asesorSeleccionado, setAsesorSeleccionado] = useState<number | null>(null);
   const [modalError, setModalError] = useState('');
 
   const fetchDetails = async () => {
@@ -41,6 +44,7 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
         setTg(data.tg);
         setEquipo(data.equipo);
         setPropuesta(data.propuesta);
+        setAsesores(data.asesores || []);
         if (data.propuesta) {
           try {
             const desc = JSON.parse(data.propuesta.descripcion);
@@ -104,13 +108,15 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
         body: JSON.stringify({
           action,
           titulo_aprobado: tituloAprobado,
-          motivo_rechazo: motivoRechazo
+          motivo_rechazo: motivoRechazo,
+          asesor_id: asesorSeleccionado
         })
       });
 
       if (res.ok) {
         setShowApprove(false);
         setShowReject(false);
+        setShowAssign(false);
         setModalError('');
         fetchDetails(); // Reload state
       } else {
@@ -319,6 +325,27 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
               <li><span className="text-gray-500 block text-xs">Carrera</span> <span className="font-bold">{tg.carrera_nombre || '-'}</span></li>
               <li><span className="text-gray-500 block text-xs">Estado General</span> <span className="font-bold uppercase text-[#c92a2a]">{tg.estado.replace('_', ' ')}</span></li>
             </ul>
+
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">Asesor Asignado</h4>
+              {tg.asesor_id ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+                    {asesores.find(a => a.id === tg.asesor_id)?.nombre_completo?.substring(0,2).toUpperCase() || 'AS'}
+                  </div>
+                  <span className="font-bold text-sm text-gray-800">{asesores.find(a => a.id === tg.asesor_id)?.nombre_completo || `Asesor ID: ${tg.asesor_id}`}</span>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm text-gray-400 italic">No asignado</span>
+                  {tg.estado === 'en_progreso' && (
+                    <button onClick={() => setShowAssign(true)} className="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 py-2 rounded-lg transition-colors w-full">
+                      Asignar Asesor
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
@@ -389,6 +416,51 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
               <button onClick={() => setShowReject(false)} className="flex-1 py-2.5 rounded-xl font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
               <button onClick={() => handleAction('reject')} disabled={actionLoading || !motivoRechazo.trim()} className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl font-bold shadow-md disabled:opacity-50 flex justify-center items-center">
                 {actionLoading ? <Loader2 size={18} className="animate-spin" /> : 'Rechazar Propuestas'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ASIGNAR ASESOR */}
+      {showAssign && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Asignar Asesor</h3>
+            <p className="text-sm text-gray-500 mb-6">Selecciona el asesor que se encargará del seguimiento de este proyecto.</p>
+            
+            <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+              {asesores.map(asesor => (
+                <div 
+                  key={asesor.id} 
+                  onClick={() => { setAsesorSeleccionado(asesor.id); setModalError(''); }}
+                  className={`p-3 rounded-xl border cursor-pointer flex justify-between items-center transition-colors ${asesorSeleccionado === asesor.id ? 'bg-blue-50 border-blue-300' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${asesorSeleccionado === asesor.id ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                      {asesor.nombre_completo.substring(0,2).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-bold text-sm text-gray-800">{asesor.nombre_completo}</p>
+                      <p className="text-xs text-gray-500">{asesor.tg_activos} proyectos activos</p>
+                    </div>
+                  </div>
+                  {asesorSeleccionado === asesor.id && <CheckCircle2 size={18} className="text-blue-600" />}
+                </div>
+              ))}
+              {asesores.length === 0 && <p className="text-sm text-gray-500 text-center py-4">No hay asesores activos disponibles.</p>}
+            </div>
+
+            {modalError && <p className="text-red-600 text-sm font-bold mt-4 text-center bg-red-50 py-2 rounded-lg">{modalError}</p>}
+
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setShowAssign(false)} className="flex-1 py-2.5 rounded-xl font-bold text-gray-600 hover:bg-gray-100">Cancelar</button>
+              <button 
+                onClick={() => handleAction('assign_advisor')} 
+                disabled={actionLoading || !asesorSeleccionado} 
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-bold shadow-md disabled:opacity-50 flex justify-center items-center transition-colors"
+              >
+                {actionLoading ? <Loader2 size={18} className="animate-spin" /> : 'Confirmar Asignación'}
               </button>
             </div>
           </div>
