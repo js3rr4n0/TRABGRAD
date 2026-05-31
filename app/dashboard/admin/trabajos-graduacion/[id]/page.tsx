@@ -99,7 +99,7 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
     setEnviandoComentario(false);
   };
 
-  const handleAction = async (action: 'approve' | 'reject') => {
+  const handleAction = async (action: 'approve' | 'reject' | 'assign_advisor') => {
     setActionLoading(true);
     try {
       const res = await fetch(`/api/admin/trabajos-graduacion/${id}`, {
