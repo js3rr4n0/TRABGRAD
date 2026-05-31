@@ -443,7 +443,7 @@ export default function EgresadoDashboard() {
                 value={inviteCarnet}
                 onChange={(e) => setInviteCarnet(e.target.value)}
                 placeholder="Ej. 2019TM602"
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] uppercase transition-all"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] uppercase transition-all"
                 autoFocus
               />
               <p className="text-xs text-gray-400 mt-1">El estudiante debe estar registrado y no tener un proyecto activo.</p>
