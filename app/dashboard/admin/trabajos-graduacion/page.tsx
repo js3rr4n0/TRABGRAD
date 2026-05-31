@@ -7,9 +7,12 @@ type Trabajo = {
   titulo: string;
   tipo: string;
   estado: string;
-  fecha_envio: string | null;
+  fecha_inicio: string | null;
   asesor_nombre: string | null;
   coordinador_nombre: string | null;
+  facultad_nombre: string | null;
+  carrera_nombre: string | null;
+  estudiantes: { nombre: string; carnet: string }[] | null;
 };
 
 export default function TrabajosGraduacionPage() {
@@ -98,9 +101,10 @@ export default function TrabajosGraduacionPage() {
             <tr className="bg-gray-50/50 border-b border-gray-100 text-[11px] font-bold text-gray-700 uppercase tracking-wider">
               <th className="px-6 py-4">Título del Trabajo</th>
               <th className="px-6 py-4">Tipo</th>
+              <th className="px-6 py-4">Estudiantes</th>
               <th className="px-6 py-4">Asesores / Coord.</th>
               <th className="px-6 py-4 text-center">Estado</th>
-              <th className="px-6 py-4 text-center">Fecha Envío</th>
+              <th className="px-6 py-4 text-center">Fecha Inicio</th>
               <th className="px-6 py-4 text-center">Acciones</th>
             </tr>
           </thead>
@@ -123,11 +127,28 @@ export default function TrabajosGraduacionPage() {
             ) : (
               trabajos.map((tg) => (
                 <tr key={tg.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-4 max-w-[250px]">
+                  <td className="px-6 py-4 max-w-[200px]">
                     <p className="font-bold text-[#1b263b] truncate" title={tg.titulo}>{tg.titulo}</p>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase truncate" title={tg.carrera_nombre || ''}>
+                      {tg.carrera_nombre}
+                    </p>
                   </td>
                   <td className="px-6 py-4">
                     <span className="font-medium text-gray-600 capitalize">{tg.tipo}</span>
+                  </td>
+                  <td className="px-6 py-4 max-w-[200px]">
+                    {tg.estudiantes && tg.estudiantes.length > 0 ? (
+                      <div className="flex flex-col gap-1">
+                        {tg.estudiantes.map((e, idx) => (
+                          <div key={idx} className="flex flex-col">
+                            <span className="text-sm font-medium text-gray-800 truncate" title={e.nombre}>{e.nombre}</span>
+                            <span className="text-[10px] text-gray-500 font-bold">{e.carnet}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">Sin estudiantes</span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-medium text-gray-800">{tg.asesor_nombre || 'Sin Asesor'}</p>
@@ -139,7 +160,7 @@ export default function TrabajosGraduacionPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center text-gray-600 text-xs font-medium">
-                    {tg.fecha_envio ? new Date(tg.fecha_envio).toLocaleDateString() : '-'}
+                    {tg.fecha_inicio ? new Date(tg.fecha_inicio).toLocaleDateString() : '-'}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-3">

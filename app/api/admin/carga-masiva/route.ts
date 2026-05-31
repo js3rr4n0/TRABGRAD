@@ -72,7 +72,42 @@ export async function POST(req: Request) {
       }
     }
     else if (tipo === 'temas') {
-      // Implementación futura si decides hacer Temas Históricos
+      for (const row of datos) {
+        if (!row.titulo || !row.tipo || !row.carrera_id || !row.facultad_id) continue;
+        
+        const asesor_id = row.asesor_id ? parseInt(row.asesor_id) : null;
+        const coordinador_id = row.coordinador_id ? parseInt(row.coordinador_id) : null;
+        const carrera_id = parseInt(row.carrera_id);
+        const facultad_id = parseInt(row.facultad_id);
+        
+        // Asumiendo que tg.carrera y tg.facultad han sido migrados a carrera_id y facultad_id
+        const tgRes = await sql`
+          INSERT INTO sistema_tg.tg 
+            (titulo, asesor_id, coordinador_id, tipo, estado, carrera_id, facultad_id, fecha_inicio, fecha_fin)
+          VALUES 
+            (${row.titulo}, ${asesor_id}, ${coordinador_id}, ${row.tipo}, ${row.estado || 'finalizada'}, ${carrera_id}, ${facultad_id}, ${row.fecha_inicio ? new Date(row.fecha_inicio) : null}, ${row.fecha_fin ? new Date(row.fecha_fin) : null})
+          RETURNING id
+        `;
+        
+        const newTgId = tgRes[0].id;
+        
+        if (row.estudiantes_carnets) {
+          const carnets = row.estudiantes_carnets.split(',').map((c: string) => c.trim()).filter((c: string) => c);
+          
+          for (const carnet of carnets) {
+            const userRes = await sql`SELECT id FROM sistema_tg.usuarios WHERE carnet = ${carnet} LIMIT 1`;
+            if (userRes.length > 0) {
+              await sql`
+                INSERT INTO sistema_tg.tg_egresados (tg_id, egresado_id, rol_grupo, estado_participacion)
+                VALUES (${newTgId}, ${userRes[0].id}, 'integrante', 'finalizado')
+                ON CONFLICT (tg_id, egresado_id) DO NOTHING
+              `;
+            }
+          }
+        }
+        
+        insertados++;
+      }
     }
 
     return NextResponse.json({ success: true, insertados });

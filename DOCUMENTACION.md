@@ -126,5 +126,12 @@ Este archivo documenta los cambios realizados en el proyecto y sirve como regist
   - Se incorporaron 4 consultas SQL simultáneas (`Promise.all()`) para extraer en tiempo real la cantidad de: Usuarios Activos, Asesores Registrados, Facultades y Carreras.
   - Las tarjetas resumen de la cabecera ahora reflejan el pulso exacto de la base de datos.
 
-*(Los siguientes cambios se añadirán debajo de esta línea)*
+- **Trabajos de Graduación y Egresados (Relación N:M)**:
+  - Se modificó la interfaz y la API de listado (`GET /api/admin/trabajos-graduacion`) para integrar la información desde `tg_egresados`. 
+  - La tabla ahora muestra los nombres y carnets de todos los estudiantes vinculados a un solo Proyecto o Tesis (soportando múltiples alumnos por proyecto).
+- **Carga Masiva de TGs Históricos**:
+  - Se habilitó la opción `temas_historicos.csv` en `/dashboard/admin/carga-masiva`.
+  - Columnas esperadas actualizadas: Se reemplazaron `fecha_envio` y `fecha_aprobacion` por un campo `estudiantes_carnets`. Este campo permite subir múltiples carnets separados por comas.
+  - La ruta POST (`/api/admin/carga-masiva`) realiza la creación del TG y, mediante un bucle, busca a los alumnos por carnet y los enlaza automáticamente creando las filas correspondientes en `tg_egresados` en estado 'finalizado' e 'integrante'.
+
 

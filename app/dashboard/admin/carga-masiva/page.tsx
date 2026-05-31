@@ -17,7 +17,7 @@ const FORMATOS = {
   },
   temas: {
     nombre: 'temas_historicos.csv',
-    columnas: ['titulo', 'asesor_id', 'coordinador_id', 'tipo', 'estado', 'carrera_id', 'facultad_id', 'fecha_envio', 'fecha_aprobacion', 'fecha_inicio', 'fecha_fin']
+    columnas: ['titulo', 'asesor_id', 'coordinador_id', 'tipo', 'estado', 'carrera_id', 'facultad_id', 'estudiantes_carnets', 'fecha_inicio', 'fecha_fin']
   }
 };
 
