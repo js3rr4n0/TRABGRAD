@@ -9,13 +9,16 @@ export default function EgresadoDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [tg, setTg] = useState<any>(null);
   const [propuestaActiva, setPropuestaActiva] = useState<any>(null);
-  const [equipo, setEquipo] = useState<any[]>([]);
-  const [invitacion, setInvitacion] = useState<any>(null);
-  
+  // Estados para notificaciones UI
+  const [globalError, setGlobalError] = useState('');
+  const [globalSuccess, setGlobalSuccess] = useState('');
+
   // Estados para el Modal de Invitación
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteCarnet, setInviteCarnet] = useState('');
   const [inviting, setInviting] = useState(false);
+  const [modalError, setModalError] = useState('');
+  const [modalSuccess, setModalSuccess] = useState('');
   
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -54,8 +57,12 @@ export default function EgresadoDashboard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setGlobalError('');
+    setGlobalSuccess('');
+    
     if (!propuestas.p1 || !propuestas.p2 || !propuestas.p3 || !file) {
-      return alert('Por favor llena las 3 propuestas y adjunta tu documento de soporte.');
+      setGlobalError('Por favor llena las 3 propuestas y adjunta tu documento de soporte.');
+      return;
     }
 
     setSubmitting(true);
@@ -73,14 +80,14 @@ export default function EgresadoDashboard() {
       });
 
       if (res.ok) {
-        alert('Propuestas enviadas correctamente.');
+        setGlobalSuccess('Propuestas enviadas correctamente.');
         fetchTgInfo();
       } else {
         const data = await res.json();
-        alert(data.error || 'Error al enviar');
+        setGlobalError(data.error || 'Error al enviar');
       }
     } catch (err) {
-      alert('Error de conexión');
+      setGlobalError('Error de conexión');
     } finally {
       setSubmitting(false);
     }
@@ -88,12 +95,16 @@ export default function EgresadoDashboard() {
 
   const handleInvite = () => {
     setInviteCarnet('');
+    setModalError('');
+    setModalSuccess('');
     setShowInviteModal(true);
   };
 
   const submitInvite = async () => {
     if (!inviteCarnet.trim()) return;
     setInviting(true);
+    setModalError('');
+    setModalSuccess('');
     try {
       const res = await fetch('/api/egresado/invitaciones', {
         method: 'POST',
@@ -101,20 +112,23 @@ export default function EgresadoDashboard() {
         body: JSON.stringify({ carnet: inviteCarnet.trim().toUpperCase(), tipo: tipoTg })
       });
       if (res.ok) {
-        alert('Invitación enviada');
-        setShowInviteModal(false);
-        fetchTgInfo();
+        setModalSuccess('¡Invitación enviada con éxito!');
+        setTimeout(() => {
+          setShowInviteModal(false);
+          fetchTgInfo();
+        }, 1500);
       } else {
-        alert((await res.json()).error);
+        setModalError((await res.json()).error);
       }
     } catch (err) {
-      alert('Error de red');
+      setModalError('Error de red al invitar');
     } finally {
       setInviting(false);
     }
   };
 
   const handleInvitationReply = async (action: 'accept' | 'reject') => {
+    setGlobalError('');
     try {
       const res = await fetch('/api/egresado/invitaciones', {
         method: 'PUT',
@@ -125,10 +139,10 @@ export default function EgresadoDashboard() {
         setInvitacion(null);
         fetchTgInfo();
       } else {
-        alert((await res.json()).error);
+        setGlobalError((await res.json()).error);
       }
     } catch(err) {
-      alert('Error de red');
+      setGlobalError('Error de red al procesar la invitación');
     }
   };
 
@@ -149,6 +163,13 @@ export default function EgresadoDashboard() {
             <span className="italic text-gray-500">"{invitacion.titulo}"</span>
           </p>
         </div>
+        
+        {globalError && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
+            {globalError}
+          </div>
+        )}
+
         <div className="flex justify-center gap-4 pt-4 border-t border-gray-100">
           <button onClick={() => handleInvitationReply('reject')} className="px-6 py-2.5 rounded-xl font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-colors">Rechazar</button>
           <button onClick={() => handleInvitationReply('accept')} className="px-6 py-2.5 rounded-xl font-bold text-white bg-green-600 hover:bg-green-700 transition-colors shadow-lg shadow-green-500/30">Aceptar Invitación</button>
@@ -210,6 +231,19 @@ export default function EgresadoDashboard() {
                 <AlertCircle size={20} className="shrink-0 mt-0.5" />
                 <p className="text-sm">Describe brevemente de qué tratará cada propuesta. Adjunta al final un único documento PDF que contenga el desarrollo, justificación y bases de las tres alternativas planteadas.</p>
               </div>
+
+              {globalError && (
+                <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-200 flex items-center gap-2 text-sm font-medium">
+                  <AlertCircle size={18} />
+                  {globalError}
+                </div>
+              )}
+              {globalSuccess && (
+                <div className="bg-green-50 text-green-700 p-4 rounded-xl border border-green-200 flex items-center gap-2 text-sm font-medium">
+                  <CheckCircle2 size={18} />
+                  {globalSuccess}
+                </div>
+              )}
 
               {/* TIPO DE TG */}
               {!tg && (
@@ -448,6 +482,20 @@ export default function EgresadoDashboard() {
               />
               <p className="text-xs text-gray-400 mt-1">El estudiante debe estar registrado y no tener un proyecto activo.</p>
             </div>
+
+            {modalError && (
+              <div className="mb-4 bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100 flex items-center gap-2">
+                <AlertCircle size={16} />
+                {modalError}
+              </div>
+            )}
+            
+            {modalSuccess && (
+              <div className="mb-4 bg-green-50 text-green-700 p-3 rounded-lg text-sm border border-green-100 flex items-center gap-2">
+                <CheckCircle2 size={16} />
+                {modalSuccess}
+              </div>
+            )}
 
             <div className="flex justify-end gap-3">
               <button 
