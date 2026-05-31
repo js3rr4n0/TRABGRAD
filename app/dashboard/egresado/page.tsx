@@ -23,6 +23,14 @@ export default function EgresadoDashboard() {
   const [file, setFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Estados para el Chat
+  const [comentarios, setComentarios] = useState<any[]>([]);
+  const [nuevoComentario, setNuevoComentario] = useState('');
+  const [comentarioFile, setComentarioFile] = useState<File | null>(null);
+  const comentarioFileInputRef = useRef<HTMLInputElement>(null);
+  const [enviandoComentario, setEnviandoComentario] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
   const [propuestas, setPropuestas] = useState({
     p1: '', p2: '', p3: ''
   });
@@ -37,6 +45,10 @@ export default function EgresadoDashboard() {
         setPropuestaActiva(data.propuesta);
         setEquipo(data.equipo || []);
         setInvitacion(data.invitacion || null);
+
+        if (data.tg?.id) {
+          fetchComentarios(data.tg.id);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -44,6 +56,24 @@ export default function EgresadoDashboard() {
       setLoading(false);
     }
   };
+
+  const fetchComentarios = async (tg_id: number) => {
+    try {
+      const res = await fetch(`/api/comentarios?tg_id=${tg_id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setComentarios(data);
+      }
+    } catch(err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [comentarios, activeTab]);
 
   useEffect(() => {
     fetchTgInfo();
@@ -143,6 +173,37 @@ export default function EgresadoDashboard() {
       }
     } catch(err) {
       setGlobalError('Error de red al procesar la invitación');
+    }
+  };
+
+  const enviarComentario = async () => {
+    if ((!nuevoComentario.trim() && !comentarioFile) || !tg?.id) return;
+    setEnviandoComentario(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('tg_id', tg.id);
+      formData.append('mensaje', nuevoComentario);
+      if (comentarioFile) formData.append('archivo', comentarioFile);
+
+      const res = await fetch('/api/comentarios', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (res.ok) {
+        const nuevoMsj = await res.json();
+        setComentarios(prev => [...prev, nuevoMsj]);
+        setNuevoComentario('');
+        setComentarioFile(null);
+        if (comentarioFileInputRef.current) comentarioFileInputRef.current.value = '';
+      } else {
+        setGlobalError('Error al enviar mensaje');
+      }
+    } catch(err) {
+      setGlobalError('Error de red');
+    } finally {
+      setEnviandoComentario(false);
     }
   };
 
@@ -335,64 +396,85 @@ export default function EgresadoDashboard() {
           ) : (
             /* TAB DE COMENTARIOS */
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="bg-gray-50 p-4 border-b border-gray-100 flex items-center gap-3">
-                <MessageSquare size={20} className="text-gray-500" />
-                <h3 className="font-bold text-gray-800">Historial de Revisiones y Feedback</h3>
+              <div className="bg-gray-50 p-4 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <MessageSquare size={20} className="text-gray-500" />
+                  <h3 className="font-bold text-gray-800">Foro del Proyecto</h3>
+                </div>
+                <span className="text-xs text-gray-400">{comentarios.length} mensajes</span>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-gray-50/30">
                 
-                {/* Mensaje Sistema */}
-                <div className="flex justify-center">
-                  <span className="bg-gray-100 text-gray-500 text-xs px-3 py-1 rounded-full font-medium">Inicio del proceso de Trabajo de Graduación</span>
-                </div>
-
-                {/* Mensaje Coordinador */}
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm shrink-0">CR</div>
-                  <div className="bg-gray-50 border border-gray-100 p-4 rounded-2xl rounded-tl-sm w-[85%]">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-sm text-gray-800">Carlos Ramírez (Coordinador)</span>
-                      <span className="text-xs text-gray-400">Hoy, 10:30 AM</span>
-                    </div>
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      Hola. Bienvenido al sistema. Recuerda que la Propuesta 1 debe ser tu tema principal y de mayor interés. Estaré revisando la información una vez la subas.
-                    </p>
+                {comentarios.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-3 opacity-60">
+                    <MessageSquare size={48} />
+                    <p className="text-sm font-medium">Aún no hay mensajes en este proyecto</p>
                   </div>
-                </div>
-
-                {/* Mensaje Asesor */}
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-sm shrink-0">AS</div>
-                  <div className="bg-gray-50 border border-gray-100 p-4 rounded-2xl rounded-tl-sm w-[85%]">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-sm text-gray-800">Ana Silva (Asesora)</span>
-                      <span className="text-xs text-gray-400">Hoy, 11:15 AM</span>
-                    </div>
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      Me han asignado temporalmente como tu posible asesora. Avísame por aquí si tienes dudas en la redacción de la justificación técnica en el PDF.
-                    </p>
-                  </div>
-                </div>
+                ) : (
+                  comentarios.map((msg, idx) => {
+                    const isMe = msg.rol === 'egresado'; // Podríamos comparar con userId pero rol egresado basta por ahora visualmente si solo él es egresado
+                    // o mejorar visualización para distinguir estudiantes entre sí.
+                    return (
+                      <div key={idx} className={`flex items-start gap-4 ${isMe ? 'flex-row-reverse' : ''}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${isMe ? 'bg-[#c92a2a] text-white' : 'bg-blue-100 text-blue-700'}`}>
+                          {msg.nombre_completo.substring(0,2).toUpperCase()}
+                        </div>
+                        <div className={`p-4 rounded-2xl max-w-[85%] ${isMe ? 'bg-[#c92a2a] text-white rounded-tr-sm' : 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm shadow-sm'}`}>
+                          <div className={`flex items-center justify-between mb-1 gap-4 ${isMe ? 'text-white/80' : 'text-gray-500'}`}>
+                            <span className="font-bold text-xs">{msg.nombre_completo} ({msg.rol})</span>
+                            <span className="text-[10px]">{new Date(msg.creado_en).toLocaleString()}</span>
+                          </div>
+                          {msg.mensaje && <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.mensaje}</p>}
+                          
+                          {msg.archivo_url && (
+                            <a href={msg.archivo_url} target="_blank" className={`mt-3 inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-colors ${isMe ? 'bg-white/20 hover:bg-white/30 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>
+                              {msg.archivo_url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                                <img src={msg.archivo_url} alt="Adjunto" className="max-h-32 rounded object-cover" />
+                              ) : (
+                                <><Paperclip size={14}/> Ver Archivo Adjunto</>
+                              )}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
 
               {/* Input Comentario */}
               <div className="p-4 bg-white border-t border-gray-100">
+                {comentarioFile && (
+                  <div className="mb-3 flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-xs font-medium w-fit">
+                    <Paperclip size={14} />
+                    {comentarioFile.name}
+                    <button onClick={() => setComentarioFile(null)} className="ml-2 text-blue-400 hover:text-blue-800 font-bold">×</button>
+                  </div>
+                )}
                 <div className="flex items-end gap-3">
                   <div className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl p-2 relative focus-within:border-[#c92a2a] transition-colors">
                     <textarea 
-                      placeholder="Escribe tu respuesta a los coordinadores/asesores..." 
+                      value={nuevoComentario}
+                      onChange={e => setNuevoComentario(e.target.value)}
+                      placeholder="Escribe un mensaje al grupo o asesores..." 
                       className="w-full bg-transparent resize-none focus:outline-none text-sm p-2 max-h-32 min-h-[40px] custom-scrollbar"
                       rows={2}
+                      disabled={!tg}
                     ></textarea>
                     <div className="absolute right-3 bottom-3 flex items-center gap-2">
-                      <button className="text-gray-400 hover:text-gray-700 transition-colors p-1" title="Adjuntar Archivo">
+                      <input type="file" ref={comentarioFileInputRef} className="hidden" onChange={e => e.target.files && setComentarioFile(e.target.files[0])} />
+                      <button onClick={() => comentarioFileInputRef.current?.click()} disabled={!tg} className="text-gray-400 hover:text-[#c92a2a] transition-colors p-1" title="Adjuntar Archivo o Imagen">
                         <Paperclip size={18} />
                       </button>
                     </div>
                   </div>
-                  <button className="bg-[#1b263b] text-white p-4 rounded-xl hover:bg-[#0d1627] transition-colors shadow-sm shrink-0">
-                    <Send size={18} />
+                  <button 
+                    onClick={enviarComentario}
+                    disabled={(!nuevoComentario.trim() && !comentarioFile) || !tg || enviandoComentario}
+                    className="bg-[#1b263b] text-white p-4 rounded-xl hover:bg-[#0d1627] disabled:opacity-50 transition-colors shadow-sm shrink-0 flex items-center justify-center"
+                  >
+                    {enviandoComentario ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                   </button>
                 </div>
               </div>
