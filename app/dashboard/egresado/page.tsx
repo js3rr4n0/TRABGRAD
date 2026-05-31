@@ -315,7 +315,7 @@ export default function EgresadoDashboard() {
                   <label className="block text-sm font-bold text-[#1b263b] mb-2 flex items-center gap-2">¿Qué tipo de trabajo realizarás?</label>
                   <select 
                     value={tipoTg} onChange={e => setTipoTg(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a]"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-900 focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a]"
                   >
                     <option value="proyecto">Proyecto de Graduación</option>
                     <option value="pasantia">Pasantía</option>
@@ -359,7 +359,7 @@ export default function EgresadoDashboard() {
                           value={(propuestas as any)[`p${num}`]}
                           onChange={(e) => setPropuestas({...propuestas, [`p${num}`]: e.target.value})}
                           placeholder={`Escribe el título y un breve resumen de tu propuesta número ${num}...`}
-                          className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all min-h-[100px] resize-y group-hover:border-gray-300"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all min-h-[100px] resize-y group-hover:border-gray-300"
                         ></textarea>
                       </div>
                     ))}
@@ -461,7 +461,7 @@ export default function EgresadoDashboard() {
                       value={nuevoComentario}
                       onChange={e => setNuevoComentario(e.target.value)}
                       placeholder="Escribe un mensaje al grupo o asesores..." 
-                      className="w-full bg-transparent resize-none focus:outline-none text-sm p-2 max-h-32 min-h-[40px] custom-scrollbar"
+                      className="w-full bg-transparent resize-none focus:outline-none text-sm text-gray-900 placeholder-gray-500 p-2 max-h-32 min-h-[40px] custom-scrollbar"
                       rows={2}
                       disabled={!tg}
                     ></textarea>
