@@ -176,3 +176,17 @@ Este archivo documenta los cambios realizados en el proyecto y sirve como regist
 - **Correcciones Estrictas de Base de Datos**:
   - Se corrigió el error `violates check constraint "chk_propuesta_fecha_resolucion"` garantizando que, al aprobar o rechazar una propuesta desde el dashboard administrativo, el campo `fecha_resolucion` reciba un timestamp actual de PostgreSQL, cumpliendo con la integridad de la base de datos.
   - Se incorporó una validación extra de `maxLength={255}` para prevenir caídas de servidor si el administrador insertaba un título mayor a la columna de la base de datos, manejando el error mediante un mensaje `inline` amigable.
+
+### Actualización 08-06-2026: Mejoras Masivas al Dashboard Administrativo
+
+- **Layout Global y Visualización**:
+  - Se eliminó la barra de búsqueda estática del layout principal del administrador, despejando la cabecera.
+  - Los gráficos principales ("TGs por Estado" y "Distribución General") en `/dashboard/admin` ahora están completamente enlazados a la base de datos mediante un conteo agrupado real (`GROUP BY estado`), con contraste mejorado y re-escalado automático.
+- **Gestión de Usuarios (`/dashboard/admin/usuarios`)**:
+  - Se activaron los filtros dinámicos reales para buscar por **Nombre**, **Correo** y **Carnet**, además de filtrar por **Rol**, **Estado** y **Facultad**.
+  - **Validaciones Estrictas**: Al crear un usuario, el servidor y el cliente verifican obligatoriamente que el correo termine en `@catolica.edu.sv`. Si el rol es Egresado, el **Carnet** es 100% requerido.
+  - **Experiencia de Borrado Segura**: Se sustituyó el `toast` o `alert` por un componente visual en línea de éxito tras confirmar mediante una caja de diálogo nativa, mejorando la UX.
+- **Protección de Facultades y Carreras**:
+  - Se eliminó completamente la columna de Acciones y los botones de basura (`Trash`) en la vista de facultades/carreras para preservar permanentemente la integridad referencial de los estudiantes inscritos.
+- **Gestión de Trabajos de Graduación (`/dashboard/admin/trabajos-graduacion`)**:
+  - Se insertó un sistema robusto de multicapa de filtros locales: búsqueda por título del TG, filtrado específico por estudiante (nombre/carnet), filtro por Tipo (Pasantía, Investigación, Proyecto) y filtro por Estado oficial.
