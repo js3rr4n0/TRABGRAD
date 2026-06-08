@@ -47,7 +47,14 @@ export async function POST(req: Request) {
     }
     else if (tipo === 'usuarios') {
       for (const row of datos) {
-        if (!row.correo || !row.nombre_completo || !row.password_hash || !row.rol) continue;
+        // Aceptamos password_hash o password en texto plano
+        const rawPassword = row.password_hash || row.password;
+        if (!row.correo || !row.nombre_completo || !rawPassword || !row.rol) continue;
+        
+        let finalHash = rawPassword;
+        if (!rawPassword.startsWith('$2')) {
+          finalHash = await bcrypt.hash(rawPassword, 10);
+        }
         
         const activo = row.activo === 'false' || row.activo === '0' || row.activo?.toLowerCase() === 'falso' ? false : true;
         const carrera_id = row.carrera_id ? parseInt(row.carrera_id) : null;
@@ -57,7 +64,7 @@ export async function POST(req: Request) {
           INSERT INTO sistema_tg.usuarios 
             (nombre_completo, correo, password_hash, rol, carnet, carrera_id, facultad_id, activo, estado)
           VALUES 
-            (${row.nombre_completo}, ${row.correo}, ${row.password_hash}, ${row.rol}, ${row.carnet || null}, ${carrera_id}, ${facultad_id}, ${activo}, ${row.estado || 'Activo'})
+            (${row.nombre_completo}, ${row.correo}, ${finalHash}, ${row.rol}, ${row.carnet || null}, ${carrera_id}, ${facultad_id}, ${activo}, ${row.estado || 'Activo'})
           ON CONFLICT (correo) DO UPDATE 
           SET nombre_completo = EXCLUDED.nombre_completo,
               rol = EXCLUDED.rol,
