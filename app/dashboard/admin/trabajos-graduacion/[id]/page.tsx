@@ -169,9 +169,14 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
               <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                 <h2 className="text-lg font-bold text-gray-800">Propuestas Enviadas</h2>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${propuesta.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' : propuesta.estado === 'aprobada' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {propuesta.estado}
-                </span>
+                {(() => {
+                  const estadoMostrar = (tg.estado === 'en_progreso' || tg.estado === 'aprobada' || tg.estado === 'finalizada') ? 'aprobada' : propuesta.estado;
+                  return (
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${estadoMostrar === 'pendiente' ? 'bg-yellow-100 text-yellow-800' : estadoMostrar === 'aprobada' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {estadoMostrar}
+                    </span>
+                  );
+                })()}
               </div>
 
               <div className="space-y-4">
