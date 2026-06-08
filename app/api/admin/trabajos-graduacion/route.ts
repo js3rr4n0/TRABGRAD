@@ -12,7 +12,10 @@ export async function GET() {
         t.id,
         t.titulo,
         t.tipo,
-        t.estado,
+        CASE 
+          WHEN t.estado = 'borrador' AND (SELECT estado FROM sistema_tg.tg_propuestas p WHERE p.tg_id = t.id AND p.activa = true ORDER BY p.id DESC LIMIT 1) = 'rechazada' THEN 'rechazada'
+          ELSE t.estado 
+        END as estado,
         t.fecha_inicio,
         t.fecha_fin,
         a.nombre_completo as asesor_nombre,

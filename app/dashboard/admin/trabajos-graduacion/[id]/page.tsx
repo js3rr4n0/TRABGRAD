@@ -343,7 +343,9 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
               <li><span className="text-gray-600 font-bold block text-xs uppercase mb-1">Tipo</span> <span className="font-bold text-gray-900 capitalize text-base">{tg.tipo}</span></li>
               <li><span className="text-gray-600 font-bold block text-xs uppercase mb-1">Facultad</span> <span className="font-bold text-gray-900 text-base">{tg.facultad_nombre || '-'}</span></li>
               <li><span className="text-gray-600 font-bold block text-xs uppercase mb-1">Carrera</span> <span className="font-bold text-gray-900 text-base">{tg.carrera_nombre || '-'}</span></li>
-              <li><span className="text-gray-600 font-bold block text-xs uppercase mb-1">Estado General</span> <span className="font-bold uppercase text-[#c92a2a] text-base">{tg.estado.replace('_', ' ')}</span></li>
+              <li><span className="text-gray-600 font-bold block text-xs uppercase mb-1">Estado General</span> <span className="font-bold uppercase text-[#c92a2a] text-base">
+                {tg.estado === 'borrador' && propuesta?.estado === 'rechazada' ? 'RECHAZADA' : tg.estado.replace('_', ' ')}
+              </span></li>
             </ul>
 
             <div className="mt-6 pt-4 border-t border-gray-100">

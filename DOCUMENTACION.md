@@ -195,10 +195,14 @@ Este archivo documenta los cambios realizados en el proyecto y sirve como regist
 - **Sistema de Modales "No-Toasts"**:
   - En respuesta a una mejora crítica de UX, se erradicaron las alertas del navegador (`confirm()`, `prompt()`, `alert()`) en todo el panel de administración (Usuarios, TGs, Facultades/Carreras).
   - Todas las confirmaciones destructivas ahora utilizan una elegante ventana modal centrada renderizada de forma condicional, con notificaciones asíncronas en línea de éxito (verdes) y error (rojas), utilizando componentes de Tailwind.
-- **Validación Estricta de Invitaciones por Tipo de TG**:
-  - El botón de "Invitar Integrante" en el Dashboard del Egresado ahora evalúa en tiempo real la selección de "¿Qué tipo de trabajo realizarás?".
-  - Solo permite invitar compañeros (habilita el botón) si la modalidad seleccionada es "Proyecto de Graduación".
-  - Si el usuario selecciona "Pasantía" o "Trabajo de Investigación (Tesis)", el botón se bloquea instantáneamente, tornándose gris con cursor de no-permitido, y muestra el texto explicativo: *"Solo válido para Proyecto de Graduación"*.
+- **Validación Estricta de Invitaciones por Tipo de TG y Estado**:
+  - El botón de "Invitar Integrante" en el Dashboard del Egresado ahora evalúa en tiempo real tanto la modalidad ("¿Qué tipo de trabajo realizarás?") como el estado actual de la solicitud en la base de datos.
+  - Solo permite invitar compañeros si la modalidad seleccionada es "Proyecto de Graduación" **Y** el proyecto no ha sido aprobado.
+  - Si el usuario selecciona "Pasantía" o "Trabajo de Investigación (Tesis)", el botón se bloquea instantáneamente mostrando: *"Solo válido para Proyecto de Graduación"*.
+  - **Bloqueo Definitivo de Grupo:** Si el proyecto ya fue revisado y su estado pasa a "Aprobada" o "En Progreso", el botón de invitaciones se deshabilita para siempre bajo la premisa de *"Grupo bloqueado (Proyecto Aprobado)"*, protegiendo la integridad del equipo original frente a manipulaciones posteriores a la aprobación del Coordinador.
 - **Personalización del Cabezal de Usuario (Egresado)**:
   - La barra superior (`Header`) del portal del egresado ahora muestra dinámicamente el nombre real del estudiante y su carnet registrado.
   - Se implementó la recuperación de sesión en tiempo real asíncrona a través de `next-auth/react` (`getSession`) sustituyendo el texto estático anterior.
+- **Mejoras Visuales en el Panel de Trabajo de Graduación (Admin)**:
+  - **Flujo de Aprobación de Propuestas**: Al aprobar y dictaminar una propuesta, la seleccionada es la única que se mantiene en verde fuerte e incluye la leyenda "(Aceptada)". Las opciones descartadas o no seleccionadas se bloquean visualmente (`opacity-50`, `grayscale`, sin cursor de click).
+  - **Accesibilidad en Información General**: Se mejoró radicalmente el nivel de contraste en el menú lateral derecho (Sidebar de "Información General"). Las etiquetas de Tipo, Facultad, Carrera y Estado General pasaron de un gris deslavado a un texto prominente y sólido (`text-gray-900` para los valores, y un identificador en negrita más claro para sus encabezados).
