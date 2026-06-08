@@ -187,19 +187,34 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
                     pText = desc[`p${num}`];
                   } catch (e) {}
 
-                  return pText ? (
+                  if (!pText) return null;
+
+                  const isAprobada = tg.estado === 'en_progreso' || tg.estado === 'aprobada' || tg.estado === 'finalizada' || propuesta.estado === 'aprobada';
+                  const isSelected = tituloAprobado === pText;
+
+                  return (
                     <div 
                       key={num} 
-                      className={`p-4 rounded-xl border cursor-pointer transition-colors ${tituloAprobado === pText ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-100 hover:bg-gray-100'}`}
-                      onClick={() => setTituloAprobado(pText)}
+                      className={`p-4 rounded-xl border transition-all ${
+                        isSelected 
+                          ? 'bg-green-50 border-green-300 shadow-sm' 
+                          : isAprobada 
+                            ? 'bg-gray-50/50 border-gray-100 opacity-50 cursor-not-allowed grayscale' 
+                            : 'bg-gray-50 border-gray-100 hover:bg-gray-100 cursor-pointer'
+                      }`}
+                      onClick={() => {
+                        if (!isAprobada) setTituloAprobado(pText);
+                      }}
                     >
                       <div className="flex justify-between items-center mb-1">
-                        <p className="text-xs font-bold text-gray-500 uppercase">Propuesta {num}</p>
-                        {tituloAprobado === pText && <CheckCircle2 size={16} className="text-green-600" />}
+                        <p className={`text-xs font-bold uppercase ${isSelected ? 'text-green-700' : 'text-gray-500'}`}>
+                          Propuesta {num} {isSelected && isAprobada && '(Aceptada)'}
+                        </p>
+                        {isSelected && <CheckCircle2 size={16} className="text-green-600" />}
                       </div>
-                      <p className="text-sm text-gray-800">{pText}</p>
+                      <p className={`text-sm ${isSelected ? 'text-green-900 font-medium' : 'text-gray-800'}`}>{pText}</p>
                     </div>
-                  ) : null;
+                  );
                 })}
               </div>
 
@@ -324,11 +339,11 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
         <div className="space-y-6">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 className="font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">Información General</h3>
-            <ul className="space-y-3 text-sm">
-              <li><span className="text-gray-500 block text-xs">Tipo</span> <span className="font-bold capitalize">{tg.tipo}</span></li>
-              <li><span className="text-gray-500 block text-xs">Facultad</span> <span className="font-bold">{tg.facultad_nombre || '-'}</span></li>
-              <li><span className="text-gray-500 block text-xs">Carrera</span> <span className="font-bold">{tg.carrera_nombre || '-'}</span></li>
-              <li><span className="text-gray-500 block text-xs">Estado General</span> <span className="font-bold uppercase text-[#c92a2a]">{tg.estado.replace('_', ' ')}</span></li>
+            <ul className="space-y-4 text-sm">
+              <li><span className="text-gray-600 font-bold block text-xs uppercase mb-1">Tipo</span> <span className="font-bold text-gray-900 capitalize text-base">{tg.tipo}</span></li>
+              <li><span className="text-gray-600 font-bold block text-xs uppercase mb-1">Facultad</span> <span className="font-bold text-gray-900 text-base">{tg.facultad_nombre || '-'}</span></li>
+              <li><span className="text-gray-600 font-bold block text-xs uppercase mb-1">Carrera</span> <span className="font-bold text-gray-900 text-base">{tg.carrera_nombre || '-'}</span></li>
+              <li><span className="text-gray-600 font-bold block text-xs uppercase mb-1">Estado General</span> <span className="font-bold uppercase text-[#c92a2a] text-base">{tg.estado.replace('_', ' ')}</span></li>
             </ul>
 
             <div className="mt-6 pt-4 border-t border-gray-100">
@@ -342,7 +357,7 @@ export default function DetalleTrabajoPage({ params }: { params: Promise<{ id: s
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <span className="text-sm text-gray-400 italic">No asignado</span>
+                  <span className="text-sm font-medium text-gray-600 italic">No asignado</span>
                   {tg.estado === 'en_progreso' && (
                     <button onClick={() => setShowAssign(true)} className="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 py-2 rounded-lg transition-colors w-full">
                       Asignar Asesor
