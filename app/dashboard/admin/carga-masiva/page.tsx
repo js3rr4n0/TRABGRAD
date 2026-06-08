@@ -37,8 +37,23 @@ export default function CargaMasivaPage() {
     // Asumimos separador por coma
     const headers = lines[0].split(',').map(h => h.trim());
     const rows = lines.slice(1).map(line => {
-      // Split básico por comas (no soporta comas dentro de comillas por ahora)
-      const values = line.split(',');
+      // Split que soporta comas dentro de comillas
+      const values = [];
+      let inQuotes = false;
+      let currentValue = '';
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(currentValue);
+          currentValue = '';
+        } else {
+          currentValue += char;
+        }
+      }
+      values.push(currentValue); // último valor
+      
       const row: any = {};
       headers.forEach((h, i) => {
         row[h] = values[i] ? values[i].trim() : '';
@@ -84,7 +99,8 @@ export default function CargaMasivaPage() {
 
           // Verificar campos requeridos (básico)
           FORMATOS[selectedType].columnas.forEach(col => {
-            if (!row[col] && col !== 'carnet' && col !== 'carreras_asignadas_json') {
+            const optionalCols = ['carnet', 'carreras_asignadas_json', 'estado', 'rendimiento_pct', 'proyectos_activos', 'carrera_id', 'facultad_id', 'coordinador_id', 'asesor_id', 'fecha_inicio', 'fecha_fin'];
+            if (!row[col] && !optionalCols.includes(col)) {
               erroresGenerados.push({ fila: filaNum, mensaje: `Falta información requerida en la columna: "${col}".` });
             }
           });
