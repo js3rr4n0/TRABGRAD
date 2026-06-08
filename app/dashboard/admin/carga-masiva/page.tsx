@@ -38,7 +38,7 @@ export default function CargaMasivaPage() {
     const headers = lines[0].split(',').map(h => h.trim());
     const rows = lines.slice(1).map(line => {
       // Split que soporta comas dentro de comillas
-      const values = [];
+      const values: string[] = [];
       let inQuotes = false;
       let currentValue = '';
       for (let i = 0; i < line.length; i++) {
