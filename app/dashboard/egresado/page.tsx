@@ -597,11 +597,29 @@ export default function EgresadoDashboard() {
               
               {/* Botón Invitar */}
               {!tg || equipo.length < 3 ? (
-                <li className="flex items-center gap-3 opacity-80 hover:opacity-100 transition-opacity">
+                <li className={`flex items-center gap-3 transition-opacity ${
+                  (tg ? tg.tipo !== 'proyecto' : tipoTg !== 'proyecto') 
+                    ? 'opacity-50' 
+                    : 'opacity-80 hover:opacity-100'
+                }`}>
                   <div className="w-8 h-8 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center text-gray-400">+</div>
                   <div>
-                    <button onClick={handleInvite} className="text-sm font-medium text-[#c92a2a] hover:underline">Invitar Integrante</button>
-                    <p className="text-[10px] text-gray-500">Con su número de carnet</p>
+                    <button 
+                      onClick={handleInvite} 
+                      disabled={tg ? tg.tipo !== 'proyecto' : tipoTg !== 'proyecto'}
+                      className={`text-sm font-medium ${
+                        (tg ? tg.tipo !== 'proyecto' : tipoTg !== 'proyecto')
+                          ? 'text-gray-400 cursor-not-allowed'
+                          : 'text-[#c92a2a] hover:underline'
+                      }`}
+                    >
+                      Invitar Integrante
+                    </button>
+                    <p className="text-[10px] text-gray-500">
+                      {(tg ? tg.tipo !== 'proyecto' : tipoTg !== 'proyecto') 
+                        ? 'Solo válido para Proyecto de Graduación' 
+                        : 'Con su número de carnet'}
+                    </p>
                   </div>
                 </li>
               ) : null}
