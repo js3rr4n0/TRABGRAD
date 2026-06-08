@@ -21,6 +21,11 @@ export default function UsuariosPage() {
   const [modificados, setModificados] = useState<Set<number>>(new Set());
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteMessage, setDeleteMessage] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [rolFilter, setRolFilter] = useState('Todos los Roles');
+  const [estadoFilter, setEstadoFilter] = useState('Estado');
+  const [facultadFilter, setFacultadFilter] = useState('Facultad');
 
   useEffect(() => {
     async function fetchUsuarios() {
@@ -81,14 +86,17 @@ export default function UsuariosPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number, nombre: string) => {
     if (!confirm('¿Estás seguro de que deseas eliminar permanentemente a este usuario?')) return;
     
     setDeletingId(id);
+    setDeleteMessage('');
     try {
       const res = await fetch(`/api/admin/usuarios/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setUsuarios(usuarios.filter(u => u.id !== id));
+        setDeleteMessage(`El usuario "${nombre}" ha sido borrado exitosamente.`);
+        setTimeout(() => setDeleteMessage(''), 5000);
       } else {
         alert('Error al eliminar el usuario.');
       }
@@ -109,6 +117,27 @@ export default function UsuariosPage() {
     }
   };
 
+  const facultadesUnicas = Array.from(new Set(usuarios.map(u => u.facultad_nombre).filter(Boolean)));
+
+  const usuariosFiltrados = usuarios.filter(user => {
+    const term = searchQuery.toLowerCase();
+    const carnetStr = (user as any).carnet ? (user as any).carnet.toLowerCase() : '';
+    const matchesSearch = 
+      user.nombre_completo.toLowerCase().includes(term) || 
+      user.correo.toLowerCase().includes(term) ||
+      carnetStr.includes(term);
+    
+    const matchesRol = rolFilter === 'Todos los Roles' || user.rol === rolFilter.toLowerCase();
+    
+    let matchesEstado = true;
+    if (estadoFilter === 'Activos') matchesEstado = user.activo === true;
+    if (estadoFilter === 'Inactivos') matchesEstado = user.activo === false;
+
+    const matchesFacultad = facultadFilter === 'Facultad' || user.facultad_nombre === facultadFilter;
+
+    return matchesSearch && matchesRol && matchesEstado && matchesFacultad;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -122,32 +151,51 @@ export default function UsuariosPage() {
         </Link>
       </div>
 
+      {deleteMessage && (
+        <div className="bg-green-50 text-green-700 p-4 rounded-xl border border-green-200 flex items-center gap-2 text-sm font-medium">
+          <CheckCircle2 size={18} />
+          {deleteMessage}
+        </div>
+      )}
+
       {/* Filtros */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-        <div className="relative w-[400px]">
+      <div className="flex flex-wrap items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-gray-100 gap-4">
+        <div className="relative flex-1 min-w-[300px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input 
             type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buscar por nombre o correo..." 
             className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all"
           />
         </div>
 
-        <div className="flex gap-4">
-          <select className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-600 focus:outline-none">
+        <div className="flex flex-wrap gap-4">
+          <select 
+            value={rolFilter} onChange={e => setRolFilter(e.target.value)}
+            className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-600 focus:outline-none"
+          >
             <option>Todos los Roles</option>
             <option>Administrador</option>
             <option>Coordinador</option>
             <option>Asesor</option>
             <option>Egresado</option>
           </select>
-          <select className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-600 focus:outline-none">
+          <select 
+            value={estadoFilter} onChange={e => setEstadoFilter(e.target.value)}
+            className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-600 focus:outline-none"
+          >
             <option>Estado</option>
             <option>Activos</option>
             <option>Inactivos</option>
           </select>
-          <select className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-600 focus:outline-none">
+          <select 
+            value={facultadFilter} onChange={e => setFacultadFilter(e.target.value)}
+            className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-600 focus:outline-none"
+          >
             <option>Facultad</option>
+            {facultadesUnicas.map(fac => <option key={fac} value={fac!}>{fac}</option>)}
           </select>
         </div>
       </div>
@@ -185,7 +233,7 @@ export default function UsuariosPage() {
             </tr>
           </thead>
           <tbody className="text-sm">
-            {usuarios.map((user) => (
+            {usuariosFiltrados.map((user) => (
               <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                 <td className="px-6 py-4 font-bold text-[#c92a2a]">{user.nombre_completo}</td>
                 <td className="px-6 py-4 text-gray-700 font-medium">{user.correo}</td>
@@ -215,7 +263,7 @@ export default function UsuariosPage() {
                       <Edit3 size={18} />
                     </Link>
                     <button 
-                      onClick={() => handleDelete(user.id)}
+                      onClick={() => handleDelete(user.id, user.nombre_completo)}
                       disabled={deletingId === user.id}
                       className="hover:text-red-600 transition-colors disabled:opacity-50"
                       title="Eliminar"
@@ -226,6 +274,11 @@ export default function UsuariosPage() {
                 </td>
               </tr>
             ))}
+            {usuariosFiltrados.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-6 py-8 text-center text-gray-500">No se encontraron usuarios con estos filtros.</td>
+              </tr>
+            )}
           </tbody>
         </table>
 

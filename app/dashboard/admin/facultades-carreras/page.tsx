@@ -198,7 +198,6 @@ export default function FacultadesCarrerasPage() {
                     <th className="px-4 py-3">Código</th>
                     <th className="px-4 py-3">Nombre</th>
                     <th className="px-4 py-3 text-center">Estado</th>
-                    <th className="px-4 py-3 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -212,16 +211,6 @@ export default function FacultadesCarrerasPage() {
                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${fac.activa ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                           {fac.activa ? 'ACTIVO' : 'INACTIVO'}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <button 
-                          onClick={() => handleDeleteFacultad(fac.id)}
-                          disabled={deletingId?.tipo === 'facultad' && deletingId.id === fac.id}
-                          className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
-                          title="Eliminar"
-                        >
-                          {deletingId?.tipo === 'facultad' && deletingId.id === fac.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                        </button>
                       </td>
                     </tr>
                   ))}
@@ -287,7 +276,6 @@ export default function FacultadesCarrerasPage() {
                     <th className="px-4 py-3">Código</th>
                     <th className="px-4 py-3">Carrera y Facultad</th>
                     <th className="px-4 py-3 text-center">Estado</th>
-                    <th className="px-4 py-3 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -304,16 +292,6 @@ export default function FacultadesCarrerasPage() {
                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${car.activa ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                           {car.activa ? 'ACTIVO' : 'INACTIVO'}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <button 
-                          onClick={() => handleDeleteCarrera(car.id)}
-                          disabled={deletingId?.tipo === 'carrera' && deletingId.id === car.id}
-                          className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
-                          title="Eliminar"
-                        >
-                          {deletingId?.tipo === 'carrera' && deletingId.id === car.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                        </button>
                       </td>
                     </tr>
                   ))}

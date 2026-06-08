@@ -46,6 +46,19 @@ export default function NuevoUsuarioPage() {
     setSaving(true);
     setErrorMsg('');
 
+    // Validaciones custom
+    if (!formData.correo.endsWith('@catolica.edu.sv')) {
+      setErrorMsg('El correo debe pertenecer al dominio @catolica.edu.sv');
+      setSaving(false);
+      return;
+    }
+
+    if (formData.rol === 'egresado' && !formData.carnet.trim()) {
+      setErrorMsg('El carnet es obligatorio para el rol de egresado.');
+      setSaving(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/admin/usuarios', {
         method: 'POST',
@@ -114,7 +127,7 @@ export default function NuevoUsuarioPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">Carnet (Opcional para Admin/Coord)</label>
+              <label className="block text-sm font-semibold text-gray-800 mb-2">Carnet {formData.rol === 'egresado' ? <span className="text-red-500">*</span> : '(Opcional)'}</label>
               <input 
                 type="text" value={formData.carnet} onChange={e => setFormData({...formData, carnet: e.target.value})}
                 placeholder="Ej: 20240101"

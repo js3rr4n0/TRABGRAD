@@ -82,14 +82,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="flex-1 ml-[260px] flex flex-col">
         {/* Topbar */}
         <header className="h-[72px] bg-white border-b border-gray-100 flex items-center justify-between px-8 sticky top-0 z-10 shadow-sm">
-          <div className="relative w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Buscar..." 
-              className="w-full bg-gray-50 border border-gray-200 rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all"
-            />
-          </div>
+          <div></div>
 
           <div className="flex items-center gap-6">
             <button className="relative text-gray-500 hover:text-[#c92a2a] transition-colors">

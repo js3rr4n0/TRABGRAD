@@ -52,6 +52,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
     }
 
+    if (!correo.endsWith('@catolica.edu.sv')) {
+      return NextResponse.json({ error: 'El correo debe pertenecer al dominio @catolica.edu.sv' }, { status: 400 });
+    }
+
+    if (rol === 'egresado' && (!carnet || !carnet.trim())) {
+      return NextResponse.json({ error: 'El carnet es obligatorio para los egresados' }, { status: 400 });
+    }
+
     // Hashear la contraseña temporal
     const password_hash = await bcrypt.hash(password, 10);
 

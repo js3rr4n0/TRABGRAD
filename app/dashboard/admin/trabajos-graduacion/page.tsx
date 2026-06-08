@@ -21,6 +21,12 @@ export default function TrabajosGraduacionPage() {
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  // Filtros
+  const [searchQuery, setSearchQuery] = useState('');
+  const [studentQuery, setStudentQuery] = useState('');
+  const [tipoFilter, setTipoFilter] = useState('Todos');
+  const [estadoFilter, setEstadoFilter] = useState('Todos');
+
   useEffect(() => {
     async function fetchTrabajos() {
       try {
@@ -69,6 +75,25 @@ export default function TrabajosGraduacionPage() {
     }
   };
 
+  const trabajosFiltrados = trabajos.filter(tg => {
+    // Buscar por título
+    const matchTitulo = tg.titulo.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Buscar por estudiante (nombre o carnet)
+    const matchEstudiante = studentQuery === '' || (tg.estudiantes && tg.estudiantes.some(e => 
+      e.nombre.toLowerCase().includes(studentQuery.toLowerCase()) || 
+      e.carnet.toLowerCase().includes(studentQuery.toLowerCase())
+    ));
+
+    // Filtrar por tipo
+    const matchTipo = tipoFilter === 'Todos' || tg.tipo === tipoFilter.toLowerCase();
+
+    // Filtrar por estado
+    const matchEstado = estadoFilter === 'Todos' || tg.estado === estadoFilter.toLowerCase();
+
+    return matchTitulo && matchEstudiante && matchTipo && matchEstado;
+  });
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
@@ -85,15 +110,51 @@ export default function TrabajosGraduacionPage() {
         </Link>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-        <div className="relative max-w-md">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-wrap gap-4 items-center">
+        <div className="relative flex-1 min-w-[250px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input 
             type="text" 
-            placeholder="Buscar por título o asesor..." 
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Buscar por título de proyecto..." 
             className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all"
           />
         </div>
+
+        <div className="relative min-w-[200px]">
+          <input 
+            type="text" 
+            value={studentQuery}
+            onChange={e => setStudentQuery(e.target.value)}
+            placeholder="Filtrar por estudiante..." 
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all"
+          />
+        </div>
+
+        <select 
+          value={tipoFilter} onChange={e => setTipoFilter(e.target.value)}
+          className="bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-600 focus:outline-none min-w-[150px]"
+        >
+          <option>Todos</option>
+          <option>Proyecto</option>
+          <option>Investigacion</option>
+          <option>Pasantia</option>
+        </select>
+
+        <select 
+          value={estadoFilter} onChange={e => setEstadoFilter(e.target.value)}
+          className="bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-600 focus:outline-none min-w-[150px]"
+        >
+          <option>Todos</option>
+          <option value="borrador">Borrador</option>
+          <option value="enviada">Enviada</option>
+          <option value="aprobada">Aprobada</option>
+          <option value="rechazada">Rechazada</option>
+          <option value="en_progreso">En Progreso</option>
+          <option value="finalizada">Finalizada</option>
+          <option value="abandonada">Abandonada</option>
+        </select>
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -119,14 +180,14 @@ export default function TrabajosGraduacionPage() {
                   </div>
                 </td>
               </tr>
-            ) : trabajos.length === 0 ? (
+            ) : trabajosFiltrados.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
                   No hay trabajos de graduación registrados. Sube el CSV en Carga Masiva.
                 </td>
               </tr>
             ) : (
-              trabajos.map((tg) => (
+              trabajosFiltrados.map((tg) => (
                 <tr key={tg.id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-6 py-4 max-w-[200px]">
                     <p className="font-bold text-[#1b263b] truncate" title={tg.titulo}>{tg.titulo}</p>
