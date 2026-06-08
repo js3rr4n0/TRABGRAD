@@ -199,3 +199,6 @@ Este archivo documenta los cambios realizados en el proyecto y sirve como regist
   - El botón de "Invitar Integrante" en el Dashboard del Egresado ahora evalúa en tiempo real la selección de "¿Qué tipo de trabajo realizarás?".
   - Solo permite invitar compañeros (habilita el botón) si la modalidad seleccionada es "Proyecto de Graduación".
   - Si el usuario selecciona "Pasantía" o "Trabajo de Investigación (Tesis)", el botón se bloquea instantáneamente, tornándose gris con cursor de no-permitido, y muestra el texto explicativo: *"Solo válido para Proyecto de Graduación"*.
+- **Personalización del Cabezal de Usuario (Egresado)**:
+  - La barra superior (`Header`) del portal del egresado ahora muestra dinámicamente el nombre real del estudiante y su carnet registrado.
+  - Se implementó la recuperación de sesión en tiempo real asíncrona a través de `next-auth/react` (`getSession`) sustituyendo el texto estático anterior.

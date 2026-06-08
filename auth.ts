@@ -19,7 +19,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           console.log('🔍 Buscando usuario:', credentials.correo);
 
           const rows = await sql`
-            SELECT id, nombre_completo, correo, password_hash, rol, activo
+            SELECT id, nombre_completo, correo, password_hash, rol, activo, carnet
             FROM sistema_tg.usuarios
             WHERE correo = ${credentials.correo as string}
             LIMIT 1
@@ -47,6 +47,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: user.nombre_completo,
             email: user.correo,
             role: user.rol,
+            carnet: user.carnet,
           };
         } catch (error) {
           console.error('💥 Error en authorize:', error);
@@ -57,13 +58,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user) token.role = (user as any).role;
+      if (user) {
+        token.role = (user as any).role;
+        token.carnet = (user as any).carnet;
+      }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).role = token.role;
         (session.user as any).id = token.sub;
+        (session.user as any).carnet = token.carnet;
       }
       return session;
     },

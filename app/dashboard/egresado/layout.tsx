@@ -12,11 +12,24 @@ export default function EgresadoLayout({ children }: { children: React.ReactNode
   const [userData, setUserData] = useState({ nombre: 'Cargando...', carnet: '' });
 
   useEffect(() => {
-    getSession().then(session => {
+    getSession().then(async session => {
       if (session?.user) {
+        let userCarnet = (session.user as any).carnet;
+        
+        // Si el JWT es antiguo y no trae el carnet, lo buscamos en el servidor en tiempo real
+        if (!userCarnet) {
+          try {
+            const res = await fetch('/api/me');
+            if (res.ok) {
+              const data = await res.json();
+              userCarnet = data.carnet;
+            }
+          } catch (e) {}
+        }
+
         setUserData({
           nombre: session.user.name?.split(' ')[0] + ' ' + (session.user.name?.split(' ')[1] || '') || 'Egresado',
-          carnet: (session.user as any).carnet || 'Portal Estudiantil'
+          carnet: userCarnet || 'Egresado sin carnet'
         });
       }
     });
