@@ -14,7 +14,10 @@ export async function GET() {
     
     if (rows.length === 0) return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
 
-    return NextResponse.json({ carnet: rows[0].carnet });
+    return NextResponse.json({ 
+      carnet: rows[0].carnet,
+      role: (session.user as any).role ?? null
+    });
   } catch (error) {
     return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
   }
