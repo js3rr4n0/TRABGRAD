@@ -135,7 +135,7 @@ export default async function AdminDashboard() {
                 {totalTgs}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-gray-700 font-semibold">
               <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-gray-400"></div>Borrador ({estadosData.borrador})</div>
               <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-blue-500"></div>Enviada ({estadosData.enviada})</div>
               <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-500"></div>Rechazada ({estadosData.rechazada})</div>
