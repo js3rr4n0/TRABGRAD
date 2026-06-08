@@ -1,5 +1,5 @@
 'use client';
-import { BookOpen, Search, Trash2, Eye, Plus, Loader2 } from 'lucide-react';
+import { BookOpen, Search, Trash2, Eye, Plus, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
@@ -27,6 +27,19 @@ export default function TrabajosGraduacionPage() {
   const [tipoFilter, setTipoFilter] = useState('Todos');
   const [estadoFilter, setEstadoFilter] = useState('Todos');
 
+  const [deleteModal, setDeleteModal] = useState<number | null>(null);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const showSuccess = (msg: string) => {
+    setSuccessMessage(msg);
+    setTimeout(() => setSuccessMessage(''), 5000);
+  };
+  const showError = (msg: string) => {
+    setErrorMsg(msg);
+    setTimeout(() => setErrorMsg(''), 5000);
+  };
+
   useEffect(() => {
     async function fetchTrabajos() {
       try {
@@ -44,21 +57,24 @@ export default function TrabajosGraduacionPage() {
     fetchTrabajos();
   }, []);
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este trabajo de graduación? Esta acción no se puede deshacer.')) return;
-    
+  const executeDelete = async () => {
+    if (deleteModal === null) return;
+    const id = deleteModal;
     setDeletingId(id);
+    setDeleteModal(null);
     try {
       const res = await fetch(`/api/admin/trabajos-graduacion/${id}`, {
         method: 'DELETE'
       });
       if (res.ok) {
         setTrabajos(trabajos.filter(t => t.id !== id));
+        showSuccess('Trabajo de graduación eliminado exitosamente');
       } else {
-        alert('Error al eliminar el registro.');
+        const data = await res.json();
+        showError(data.error || 'Error al eliminar el registro');
       }
     } catch (error) {
-      alert('Error de conexión.');
+      showError('Error de conexión');
     } finally {
       setDeletingId(null);
     }
@@ -109,6 +125,20 @@ export default function TrabajosGraduacionPage() {
           <span>Nuevo Registro</span>
         </Link>
       </div>
+
+      {errorMsg && (
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-center gap-3">
+          <AlertCircle className="shrink-0" size={18} />
+          <p className="text-sm font-medium">{errorMsg}</p>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center gap-3">
+          <CheckCircle2 className="shrink-0" size={18} />
+          <p className="text-sm font-medium">{successMessage}</p>
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex flex-wrap gap-4 items-center">
         <div className="relative flex-1 min-w-[250px]">
@@ -230,7 +260,7 @@ export default function TrabajosGraduacionPage() {
                         <Eye size={18} />
                       </Link>
                       <button 
-                        onClick={() => handleDelete(tg.id)}
+                        onClick={() => setDeleteModal(tg.id)}
                         disabled={deletingId === tg.id}
                         className="text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
                         title="Eliminar de la Base de Datos"
@@ -245,6 +275,29 @@ export default function TrabajosGraduacionPage() {
           </tbody>
         </table>
       </div>
+
+      {deleteModal !== null && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-gray-100">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">¿Eliminar Trabajo?</h3>
+            <p className="text-gray-500 mb-6 text-sm">Esta acción no se puede deshacer. ¿Estás seguro?</p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setDeleteModal(null)}
+                className="px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-50 rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={executeDelete}
+                className="px-4 py-2 text-sm font-bold bg-[#c92a2a] text-white rounded-xl hover:bg-[#a02222] transition-colors shadow-sm"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

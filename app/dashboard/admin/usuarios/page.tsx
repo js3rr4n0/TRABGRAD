@@ -22,6 +22,18 @@ export default function UsuariosPage() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleteMessage, setDeleteMessage] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [deleteModal, setDeleteModal] = useState<{id: number, nombre: string} | null>(null);
+
+  const showError = (msg: string) => {
+    setErrorMsg(msg);
+    setTimeout(() => setErrorMsg(''), 5000);
+  };
+  
+  const showSuccess = (msg: string) => {
+    setDeleteMessage(msg);
+    setTimeout(() => setDeleteMessage(''), 5000);
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [rolFilter, setRolFilter] = useState('Todos los Roles');
   const [estadoFilter, setEstadoFilter] = useState('Estado');
@@ -78,30 +90,30 @@ export default function UsuariosPage() {
       await Promise.all(promesas);
       
       setModificados(new Set());
-      alert('Cambios guardados correctamente.');
+      showSuccess('Cambios guardados correctamente.');
     } catch (error) {
-      alert('Hubo un error al guardar los cambios.');
+      showError('Hubo un error al guardar los cambios.');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id: number, nombre: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar permanentemente a este usuario?')) return;
+  const executeDelete = async () => {
+    if (!deleteModal) return;
+    const { id, nombre } = deleteModal;
     
     setDeletingId(id);
-    setDeleteMessage('');
+    setDeleteModal(null);
     try {
       const res = await fetch(`/api/admin/usuarios/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setUsuarios(usuarios.filter(u => u.id !== id));
-        setDeleteMessage(`El usuario "${nombre}" ha sido borrado exitosamente.`);
-        setTimeout(() => setDeleteMessage(''), 5000);
+        showSuccess(`El usuario "${nombre}" ha sido borrado exitosamente.`);
       } else {
-        alert('Error al eliminar el usuario.');
+        showError('Error al eliminar el usuario.');
       }
     } catch (error) {
-      alert('Error de conexión.');
+      showError('Error de conexión.');
     } finally {
       setDeletingId(null);
     }
@@ -151,10 +163,17 @@ export default function UsuariosPage() {
         </Link>
       </div>
 
+      {errorMsg && (
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-center gap-3">
+          <AlertCircle className="shrink-0" size={18} />
+          <p className="text-sm font-medium">{errorMsg}</p>
+        </div>
+      )}
+
       {deleteMessage && (
-        <div className="bg-green-50 text-green-700 p-4 rounded-xl border border-green-200 flex items-center gap-2 text-sm font-medium">
-          <CheckCircle2 size={18} />
-          {deleteMessage}
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+          <CheckCircle2 size={18} className="shrink-0" />
+          <p className="text-sm font-medium">{deleteMessage}</p>
         </div>
       )}
 
@@ -263,7 +282,7 @@ export default function UsuariosPage() {
                       <Edit3 size={18} />
                     </Link>
                     <button 
-                      onClick={() => handleDelete(user.id, user.nombre_completo)}
+                      onClick={() => setDeleteModal({id: user.id, nombre: user.nombre_completo})}
                       disabled={deletingId === user.id}
                       className="hover:text-red-600 transition-colors disabled:opacity-50"
                       title="Eliminar"
@@ -299,6 +318,30 @@ export default function UsuariosPage() {
           </div>
         </div>
       </div>
+
+      {deleteModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-gray-100">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">¿Eliminar Usuario?</h3>
+            <p className="text-gray-500 mb-6 text-sm">Esta acción eliminará a <strong>{deleteModal.nombre}</strong>. Esta acción no se puede deshacer. ¿Estás seguro?</p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setDeleteModal(null)}
+                className="px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-50 rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={executeDelete}
+                className="px-4 py-2 text-sm font-bold bg-[#c92a2a] text-white rounded-xl hover:bg-[#a02222] transition-colors shadow-sm"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

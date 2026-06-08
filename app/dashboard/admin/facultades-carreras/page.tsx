@@ -18,6 +18,10 @@ export default function FacultadesCarrerasPage() {
   const [savingCarrera, setSavingCarrera] = useState(false);
   const [deletingId, setDeletingId] = useState<{tipo: 'facultad'|'carrera', id: number} | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
+  
+  // Custom Modals State
+  const [deleteModal, setDeleteModal] = useState<{ tipo: 'facultad' | 'carrera', id: number } | null>(null);
+  const [editModal, setEditModal] = useState<{ tipo: 'facultad' | 'carrera', id: number, nombre: string, codigo: string } | null>(null);
 
   const showSuccess = (msg: string) => {
     setSuccessMessage(msg);
@@ -107,14 +111,17 @@ export default function FacultadesCarrerasPage() {
     }
   };
 
-  const handleDeleteFacultad = async (id: number) => {
-    if (!confirm('¿Seguro que deseas eliminar esta facultad? Si tiene carreras asignadas, no se podrá borrar.')) return;
-    setDeletingId({ tipo: 'facultad', id });
+  const executeDelete = async () => {
+    if (!deleteModal) return;
+    const { tipo, id } = deleteModal;
+    setDeletingId({ tipo, id });
+    setDeleteModal(null);
     try {
-      const res = await fetch(`/api/admin/facultades/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/${tipo === 'facultad' ? 'facultades' : 'carreras'}/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        setFacultades(facultades.filter(f => f.id !== id));
-        showSuccess('Facultad eliminada exitosamente');
+        if (tipo === 'facultad') setFacultades(facultades.filter(f => f.id !== id));
+        else setCarreras(carreras.filter(c => c.id !== id));
+        showSuccess(`${tipo === 'facultad' ? 'Facultad' : 'Carrera'} eliminada exitosamente`);
       } else {
         const data = await res.json();
         showError(data.error || 'Error al eliminar');
@@ -126,63 +133,19 @@ export default function FacultadesCarrerasPage() {
     }
   };
 
-  const handleDeleteCarrera = async (id: number) => {
-    if (!confirm('¿Seguro que deseas eliminar esta carrera?')) return;
-    setDeletingId({ tipo: 'carrera', id });
+  const executeEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editModal) return;
+    const { tipo, id, nombre, codigo } = editModal;
+    setEditModal(null);
     try {
-      const res = await fetch(`/api/admin/carreras/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setCarreras(carreras.filter(c => c.id !== id));
-        showSuccess('Carrera eliminada exitosamente');
-      } else {
-        const data = await res.json();
-        showError(data.error || 'Error al eliminar');
-      }
-    } catch (err) {
-      showError('Error de red');
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  const handleEditFacultad = async (fac: Facultad) => {
-    const nuevoNombre = prompt('Editar Nombre de Facultad:', fac.nombre);
-    if (nuevoNombre === null) return;
-    const nuevoCodigo = prompt('Editar Código de Facultad:', fac.codigo);
-    if (nuevoCodigo === null) return;
-
-    try {
-      const res = await fetch(`/api/admin/facultades/${fac.id}`, {
+      const res = await fetch(`/api/admin/${tipo === 'facultad' ? 'facultades' : 'carreras'}/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre: nuevoNombre || fac.nombre, codigo: nuevoCodigo || fac.codigo })
+        body: JSON.stringify({ nombre, codigo })
       });
       if (res.ok) {
-        showSuccess('Facultad editada exitosamente');
-        fetchData();
-      } else {
-        const data = await res.json();
-        showError(data.error || 'Error al editar');
-      }
-    } catch (err) {
-      showError('Error de conexión');
-    }
-  };
-
-  const handleEditCarrera = async (car: Carrera) => {
-    const nuevoNombre = prompt('Editar Nombre de Carrera:', car.nombre);
-    if (nuevoNombre === null) return;
-    const nuevoCodigo = prompt('Editar Código de Carrera:', car.codigo);
-    if (nuevoCodigo === null) return;
-
-    try {
-      const res = await fetch(`/api/admin/carreras/${car.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre: nuevoNombre || car.nombre, codigo: nuevoCodigo || car.codigo })
-      });
-      if (res.ok) {
-        showSuccess('Carrera editada exitosamente');
+        showSuccess(`${tipo === 'facultad' ? 'Facultad' : 'Carrera'} editada exitosamente`);
         fetchData();
       } else {
         const data = await res.json();
@@ -281,14 +244,14 @@ export default function FacultadesCarrerasPage() {
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button 
-                            onClick={() => handleEditFacultad(fac)}
+                            onClick={() => setEditModal({ tipo: 'facultad', id: fac.id, nombre: fac.nombre, codigo: fac.codigo })}
                             className="text-gray-400 hover:text-blue-600 transition-colors"
                             title="Editar"
                           >
                             <Edit3 size={16} />
                           </button>
                           <button 
-                            onClick={() => handleDeleteFacultad(fac.id)}
+                            onClick={() => setDeleteModal({ tipo: 'facultad', id: fac.id })}
                             disabled={(fac.num_carreras || 0) > 0 || (deletingId?.tipo === 'facultad' && deletingId.id === fac.id)}
                             className={`transition-colors ${(fac.num_carreras || 0) > 0 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-red-600'}`}
                             title={(fac.num_carreras || 0) > 0 ? "No se puede eliminar (tiene carreras)" : "Eliminar"}
@@ -382,14 +345,14 @@ export default function FacultadesCarrerasPage() {
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button 
-                            onClick={() => handleEditCarrera(car)}
+                            onClick={() => setEditModal({ tipo: 'carrera', id: car.id, nombre: car.nombre, codigo: car.codigo })}
                             className="text-gray-400 hover:text-blue-600 transition-colors"
                             title="Editar"
                           >
                             <Edit3 size={16} />
                           </button>
                           <button 
-                            onClick={() => handleDeleteCarrera(car.id)}
+                            onClick={() => setDeleteModal({ tipo: 'carrera', id: car.id })}
                             disabled={(car.num_usuarios || 0) > 0 || (deletingId?.tipo === 'carrera' && deletingId.id === car.id)}
                             className={`transition-colors ${(car.num_usuarios || 0) > 0 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-red-600'}`}
                             title={(car.num_usuarios || 0) > 0 ? "No se puede eliminar (tiene estudiantes)" : "Eliminar"}
@@ -407,6 +370,72 @@ export default function FacultadesCarrerasPage() {
 
         </div>
       )}
+
+      {/* Delete Modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-gray-100">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">¿Eliminar {deleteModal.tipo}?</h3>
+            <p className="text-gray-500 mb-6 text-sm">Esta acción no se puede deshacer. ¿Estás seguro?</p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setDeleteModal(null)}
+                className="px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-50 rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={executeDelete}
+                className="px-4 py-2 text-sm font-bold bg-[#c92a2a] text-white rounded-xl hover:bg-[#a02222] transition-colors shadow-sm"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-gray-100">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Editar {editModal.tipo}</h3>
+            <form onSubmit={executeEdit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Nombre</label>
+                <input 
+                  type="text" required value={editModal.nombre} 
+                  onChange={e => setEditModal({ ...editModal, nombre: e.target.value })}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 font-medium focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Código</label>
+                <input 
+                  type="text" required value={editModal.codigo} 
+                  onChange={e => setEditModal({ ...editModal, codigo: e.target.value })}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 font-medium focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] uppercase"
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                <button 
+                  type="button" onClick={() => setEditModal(null)}
+                  className="px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  className="px-4 py-2 text-sm font-bold bg-[#1b263b] text-white rounded-xl hover:bg-[#0d1627] transition-colors shadow-sm"
+                >
+                  Guardar Cambios
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
