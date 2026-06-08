@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Building, BookOpen, Plus, Loader2, AlertCircle, Trash2, Edit3 } from 'lucide-react';
+import { Building, BookOpen, Plus, Loader2, AlertCircle, Trash2, Edit3, CheckCircle2 } from 'lucide-react';
 
 type Facultad = { id: number; nombre: string; codigo: string; activa: boolean; num_carreras?: number };
 type Carrera = { id: number; nombre: string; codigo: string; facultad_id: number; facultad_nombre?: string; activa: boolean; num_usuarios?: number };
@@ -17,6 +17,16 @@ export default function FacultadesCarrerasPage() {
   const [savingFacultad, setSavingFacultad] = useState(false);
   const [savingCarrera, setSavingCarrera] = useState(false);
   const [deletingId, setDeletingId] = useState<{tipo: 'facultad'|'carrera', id: number} | null>(null);
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const showSuccess = (msg: string) => {
+    setSuccessMessage(msg);
+    setTimeout(() => setSuccessMessage(''), 5000);
+  };
+  const showError = (msg: string) => {
+    setErrorMsg(msg);
+    setTimeout(() => setErrorMsg(''), 5000);
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -58,13 +68,14 @@ export default function FacultadesCarrerasPage() {
       });
       if (res.ok) {
         setNuevaFacultad({ nombre: '', codigo: '' });
+        showSuccess('Facultad creada exitosamente');
         fetchData();
       } else {
         const data = await res.json();
-        alert(data.error || 'Error al crear facultad');
+        showError(data.error || 'Error al crear facultad');
       }
     } catch (error) {
-      alert('Error de conexión');
+      showError('Error de conexión');
     } finally {
       setSavingFacultad(false);
     }
@@ -72,7 +83,7 @@ export default function FacultadesCarrerasPage() {
 
   const handleCrearCarrera = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nuevaCarrera.facultad_id) return alert('Selecciona una facultad');
+    if (!nuevaCarrera.facultad_id) return showError('Selecciona una facultad');
     
     setSavingCarrera(true);
     try {
@@ -83,13 +94,14 @@ export default function FacultadesCarrerasPage() {
       });
       if (res.ok) {
         setNuevaCarrera({ nombre: '', codigo: '', facultad_id: '' });
+        showSuccess('Carrera creada exitosamente');
         fetchData();
       } else {
         const data = await res.json();
-        alert(data.error || 'Error al crear carrera');
+        showError(data.error || 'Error al crear carrera');
       }
     } catch (error) {
-      alert('Error de conexión');
+      showError('Error de conexión');
     } finally {
       setSavingCarrera(false);
     }
@@ -102,12 +114,13 @@ export default function FacultadesCarrerasPage() {
       const res = await fetch(`/api/admin/facultades/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setFacultades(facultades.filter(f => f.id !== id));
+        showSuccess('Facultad eliminada exitosamente');
       } else {
         const data = await res.json();
-        alert(data.error || 'Error al eliminar');
+        showError(data.error || 'Error al eliminar');
       }
     } catch (err) {
-      alert('Error de red');
+      showError('Error de red');
     } finally {
       setDeletingId(null);
     }
@@ -120,12 +133,13 @@ export default function FacultadesCarrerasPage() {
       const res = await fetch(`/api/admin/carreras/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setCarreras(carreras.filter(c => c.id !== id));
+        showSuccess('Carrera eliminada exitosamente');
       } else {
         const data = await res.json();
-        alert(data.error || 'Error al eliminar');
+        showError(data.error || 'Error al eliminar');
       }
     } catch (err) {
-      alert('Error de red');
+      showError('Error de red');
     } finally {
       setDeletingId(null);
     }
@@ -143,10 +157,15 @@ export default function FacultadesCarrerasPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre: nuevoNombre || fac.nombre, codigo: nuevoCodigo || fac.codigo })
       });
-      if (res.ok) fetchData();
-      else alert('Error al editar');
+      if (res.ok) {
+        showSuccess('Facultad editada exitosamente');
+        fetchData();
+      } else {
+        const data = await res.json();
+        showError(data.error || 'Error al editar');
+      }
     } catch (err) {
-      alert('Error de conexión');
+      showError('Error de conexión');
     }
   };
 
@@ -162,10 +181,15 @@ export default function FacultadesCarrerasPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre: nuevoNombre || car.nombre, codigo: nuevoCodigo || car.codigo })
       });
-      if (res.ok) fetchData();
-      else alert('Error al editar');
+      if (res.ok) {
+        showSuccess('Carrera editada exitosamente');
+        fetchData();
+      } else {
+        const data = await res.json();
+        showError(data.error || 'Error al editar');
+      }
     } catch (err) {
-      alert('Error de conexión');
+      showError('Error de conexión');
     }
   };
 
@@ -179,13 +203,16 @@ export default function FacultadesCarrerasPage() {
       </div>
 
       {errorMsg && (
-        <div className="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-xl flex items-start gap-3">
-          <AlertCircle className="shrink-0 mt-0.5" size={18} />
-          <div>
-            <p className="font-bold text-sm">Aviso de Base de Datos</p>
-            <p className="text-sm">{errorMsg}</p>
-            <p className="text-xs mt-1 text-orange-600 font-medium">Nota: Asegúrate de haber ejecutado el script SQL para crear estas tablas en Neon.</p>
-          </div>
+        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-center gap-3">
+          <AlertCircle className="shrink-0" size={18} />
+          <p className="text-sm font-medium">{errorMsg}</p>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center gap-3">
+          <CheckCircle2 className="shrink-0" size={18} />
+          <p className="text-sm font-medium">{successMessage}</p>
         </div>
       )}
 

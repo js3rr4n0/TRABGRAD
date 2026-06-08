@@ -104,7 +104,7 @@ export default function NuevoTGPage() {
               <label className="block text-sm font-bold text-gray-700 mb-2">Título del Trabajo *</label>
               <input 
                 type="text" required value={formData.titulo} onChange={e => setFormData({...formData, titulo: e.target.value})}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a]"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 font-medium focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all"
                 placeholder="Ej: Sistema Integrado de..." 
               />
             </div>
@@ -112,7 +112,7 @@ export default function NuevoTGPage() {
               <label className="block text-sm font-bold text-gray-700 mb-2">Tipo *</label>
               <select 
                 required value={formData.tipo} onChange={e => setFormData({...formData, tipo: e.target.value})}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a]"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 font-medium focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all"
               >
                 <option value="proyecto">Proyecto</option>
                 <option value="pasantia">Pasantía</option>
@@ -123,7 +123,7 @@ export default function NuevoTGPage() {
               <label className="block text-sm font-bold text-gray-700 mb-2">Estado</label>
               <select 
                 value={formData.estado} onChange={e => setFormData({...formData, estado: e.target.value})}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a]"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 font-medium focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all"
               >
                 <option value="borrador">Borrador</option>
                 <option value="enviada">Enviada</option>
@@ -136,14 +136,14 @@ export default function NuevoTGPage() {
               <label className="block text-sm font-bold text-gray-700 mb-2">Fecha Inicio</label>
               <input 
                 type="date" value={formData.fecha_inicio} onChange={e => setFormData({...formData, fecha_inicio: e.target.value})}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a]"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 font-medium focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all"
               />
             </div>
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">Fecha Fin</label>
               <input 
                 type="date" value={formData.fecha_fin} onChange={e => setFormData({...formData, fecha_fin: e.target.value})}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a]"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 font-medium focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all"
               />
             </div>
           </div>
@@ -159,7 +159,7 @@ export default function NuevoTGPage() {
               <label className="block text-sm font-bold text-gray-700 mb-2">Facultad *</label>
               <select 
                 required value={formData.facultad_id} onChange={e => setFormData({...formData, facultad_id: e.target.value})}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a]"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 font-medium focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all"
               >
                 <option value="">Seleccione...</option>
                 {facultades.map(f => <option key={f.id} value={f.id}>{f.nombre}</option>)}
@@ -169,7 +169,7 @@ export default function NuevoTGPage() {
               <label className="block text-sm font-bold text-gray-700 mb-2">Carrera *</label>
               <select 
                 required value={formData.carrera_id} onChange={e => setFormData({...formData, carrera_id: e.target.value})}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a]"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 font-medium focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all"
               >
                 <option value="">Seleccione...</option>
                 {carreras.filter(c => !formData.facultad_id || c.facultad_id === parseInt(formData.facultad_id)).map(c => (
@@ -195,7 +195,7 @@ export default function NuevoTGPage() {
               <label className="block text-sm font-bold text-gray-700 mb-2">Carnets de Estudiantes</label>
               <input 
                 type="text" value={formData.estudiantes_carnets} onChange={e => setFormData({...formData, estudiantes_carnets: e.target.value})}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] uppercase"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 font-medium focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] uppercase transition-all"
                 placeholder="EJ: 2020SS601, 2019TM602" 
               />
             </div>
@@ -206,7 +206,7 @@ export default function NuevoTGPage() {
               <label className="block text-sm font-bold text-gray-700 mb-2">Asesor (Opcional)</label>
               <select 
                 value={formData.asesor_id} onChange={e => setFormData({...formData, asesor_id: e.target.value})}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a]"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 font-medium focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all"
               >
                 <option value="">Ninguno asignado aún</option>
                 {asesores.map(a => <option key={a.id} value={a.id}>{a.nombre_completo}</option>)}
@@ -216,7 +216,7 @@ export default function NuevoTGPage() {
               <label className="block text-sm font-bold text-gray-700 mb-2">Coordinador (Opcional)</label>
               <select 
                 value={formData.coordinador_id} onChange={e => setFormData({...formData, coordinador_id: e.target.value})}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a]"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 font-medium focus:outline-none focus:border-[#c92a2a] focus:ring-1 focus:ring-[#c92a2a] transition-all"
               >
                 <option value="">Ninguno asignado aún</option>
                 {coordinadores.map(c => <option key={c.id} value={c.id}>{c.nombre_completo}</option>)}
