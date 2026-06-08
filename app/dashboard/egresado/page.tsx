@@ -369,7 +369,7 @@ export default function EgresadoDashboard() {
                     )}
                   </div>
                 </div>
-              ) : propuestaActiva ? (
+              ) : propuestaActiva && propuestaActiva.estado !== 'rechazada' ? (
                 <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 space-y-6">
                   <div className="flex items-center justify-between border-b border-gray-200 pb-4">
                     <h3 className="font-bold text-gray-800 flex items-center gap-2">
@@ -425,9 +425,21 @@ export default function EgresadoDashboard() {
                   </div>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-8">
-                  <div className="space-y-6">
-                    {[1, 2, 3].map((num) => (
+                <div className="space-y-6">
+                  {propuestaActiva && propuestaActiva.estado === 'rechazada' && (
+                    <div className="bg-red-50 text-red-800 p-6 rounded-2xl border border-red-200 shadow-sm animate-in fade-in zoom-in duration-300">
+                      <div className="flex items-center gap-3 mb-2">
+                        <AlertCircle size={24} className="text-[#c92a2a]" />
+                        <h4 className="font-bold text-lg text-[#c92a2a]">Propuestas Anteriores Rechazadas</h4>
+                      </div>
+                      <p className="text-sm font-medium mb-3">{propuestaActiva.motivo_rechazo || 'Las propuestas no cumplen con los requisitos mínimos.'}</p>
+                      <p className="text-xs text-red-600 font-bold bg-white/50 inline-block px-3 py-1.5 rounded-lg border border-red-100">Por favor, redacta y envía nuevas opciones usando el formulario a continuación.</p>
+                    </div>
+                  )}
+                  
+                  <form onSubmit={handleSubmit} className="space-y-8">
+                    <div className="space-y-6">
+                      {[1, 2, 3].map((num) => (
                       <div key={num} className="group">
                         <label className="block text-sm font-bold text-[#1b263b] mb-2 flex items-center gap-2">
                           <span className="bg-[#1b263b] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">
@@ -475,6 +487,7 @@ export default function EgresadoDashboard() {
                     </button>
                   </div>
                 </form>
+                </div>
               )}
             </div>
           ) : (
