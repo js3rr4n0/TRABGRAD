@@ -186,7 +186,12 @@ Este archivo documenta los cambios realizados en el proyecto y sirve como regist
   - Se activaron los filtros dinámicos reales para buscar por **Nombre**, **Correo** y **Carnet**, además de filtrar por **Rol**, **Estado** y **Facultad**.
   - **Validaciones Estrictas**: Al crear un usuario, el servidor y el cliente verifican obligatoriamente que el correo termine en `@catolica.edu.sv`. Si el rol es Egresado, el **Carnet** es 100% requerido.
   - **Experiencia de Borrado Segura**: Se sustituyó el `toast` o `alert` por un componente visual en línea de éxito tras confirmar mediante una caja de diálogo nativa, mejorando la UX.
-- **Protección de Facultades y Carreras**:
-  - Se eliminó completamente la columna de Acciones y los botones de basura (`Trash`) en la vista de facultades/carreras para preservar permanentemente la integridad referencial de los estudiantes inscritos.
+- **Protección Inteligente de Facultades y Carreras**:
+  - Se reintrodujo el sistema CRUD (Crear, Leer, Actualizar, Borrar) en la vista de facultades/carreras, pero ahora de manera condicional.
+  - La base de datos calcula automáticamente la cantidad de carreras asignadas a una facultad, y los estudiantes vinculados a una carrera.
+  - El botón de borrado se deshabilita preventivamente si existen relaciones anidadas, protegiendo permanentemente la integridad referencial.
 - **Gestión de Trabajos de Graduación (`/dashboard/admin/trabajos-graduacion`)**:
   - Se insertó un sistema robusto de multicapa de filtros locales: búsqueda por título del TG, filtrado específico por estudiante (nombre/carnet), filtro por Tipo (Pasantía, Investigación, Proyecto) y filtro por Estado oficial.
+- **Sistema de Modales "No-Toasts"**:
+  - En respuesta a una mejora crítica de UX, se erradicaron las alertas del navegador (`confirm()`, `prompt()`, `alert()`) en todo el panel de administración (Usuarios, TGs, Facultades/Carreras).
+  - Todas las confirmaciones destructivas ahora utilizan una elegante ventana modal centrada renderizada de forma condicional, con notificaciones asíncronas en línea de éxito (verdes) y error (rojas), utilizando componentes de Tailwind.
