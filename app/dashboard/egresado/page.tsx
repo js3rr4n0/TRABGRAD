@@ -598,7 +598,7 @@ export default function EgresadoDashboard() {
               {/* Botón Invitar */}
               {!tg || equipo.length < 3 ? (
                 <li className={`flex items-center gap-3 transition-opacity ${
-                  (tg ? tg.tipo !== 'proyecto' : tipoTg !== 'proyecto') 
+                  (tg ? (tg.tipo?.toLowerCase() !== 'proyecto' || tg.estado === 'aprobada' || tg.estado === 'en_progreso') : tipoTg !== 'proyecto') 
                     ? 'opacity-50' 
                     : 'opacity-80 hover:opacity-100'
                 }`}>
@@ -606,9 +606,9 @@ export default function EgresadoDashboard() {
                   <div>
                     <button 
                       onClick={handleInvite} 
-                      disabled={tg ? tg.tipo !== 'proyecto' : tipoTg !== 'proyecto'}
+                      disabled={tg ? (tg.tipo?.toLowerCase() !== 'proyecto' || tg.estado === 'aprobada' || tg.estado === 'en_progreso') : tipoTg !== 'proyecto'}
                       className={`text-sm font-medium ${
-                        (tg ? tg.tipo !== 'proyecto' : tipoTg !== 'proyecto')
+                        (tg ? (tg.tipo?.toLowerCase() !== 'proyecto' || tg.estado === 'aprobada' || tg.estado === 'en_progreso') : tipoTg !== 'proyecto')
                           ? 'text-gray-400 cursor-not-allowed'
                           : 'text-[#c92a2a] hover:underline'
                       }`}
@@ -616,9 +616,11 @@ export default function EgresadoDashboard() {
                       Invitar Integrante
                     </button>
                     <p className="text-[10px] text-gray-500">
-                      {(tg ? tg.tipo !== 'proyecto' : tipoTg !== 'proyecto') 
-                        ? 'Solo válido para Proyecto de Graduación' 
-                        : 'Con su número de carnet'}
+                      {tg && (tg.estado === 'aprobada' || tg.estado === 'en_progreso')
+                        ? 'Grupo bloqueado (Proyecto Aprobado)'
+                        : (tg ? tg.tipo?.toLowerCase() !== 'proyecto' : tipoTg !== 'proyecto') 
+                          ? 'Solo válido para Proyecto de Graduación' 
+                          : 'Con su número de carnet'}
                     </p>
                   </div>
                 </li>
