@@ -1,5 +1,5 @@
 'use client';
-import { Plus, Search, Edit3, Eye, MoreHorizontal, Check, X, Loader2, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit3, Eye, MoreHorizontal, Check, X, Loader2, Trash2, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
