@@ -1,14 +1,26 @@
 'use client';
 import Link from 'next/link';
 import { LogOut, User, Bell, GraduationCap } from 'lucide-react';
-import { signOut } from 'next-auth/react';
+import { signOut, getSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
+import { useState, useEffect } from 'react';
 
 export default function EgresadoLayout({ children }: { children: React.ReactNode }) {
   const handleSignOut = () => {
     signOut({ callbackUrl: '/login' });
   };
-  // Aquí podemos cargar la sesión para el nombre
+  const [userData, setUserData] = useState({ nombre: 'Cargando...', carnet: '' });
+
+  useEffect(() => {
+    getSession().then(session => {
+      if (session?.user) {
+        setUserData({
+          nombre: session.user.name?.split(' ')[0] + ' ' + (session.user.name?.split(' ')[1] || '') || 'Egresado',
+          carnet: (session.user as any).carnet || 'Portal Estudiantil'
+        });
+      }
+    });
+  }, []);
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex flex-col font-sans">
       {/* Top Navigation */}
@@ -30,8 +42,8 @@ export default function EgresadoLayout({ children }: { children: React.ReactNode
               
               <div className="flex items-center gap-3 pl-6 border-l border-[#ff4d4d]/30">
                 <div className="text-right hidden sm:block">
-                  <p className="text-sm font-bold leading-tight">Egresado</p>
-                  <p className="text-xs text-white/70">Portal Estudiantil</p>
+                  <p className="text-sm font-bold leading-tight">{userData.nombre}</p>
+                  <p className="text-xs text-white/70">{userData.carnet}</p>
                 </div>
                 <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center border border-white/30">
                   <User size={18} />

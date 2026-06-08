@@ -195,3 +195,7 @@ Este archivo documenta los cambios realizados en el proyecto y sirve como regist
 - **Sistema de Modales "No-Toasts"**:
   - En respuesta a una mejora crítica de UX, se erradicaron las alertas del navegador (`confirm()`, `prompt()`, `alert()`) en todo el panel de administración (Usuarios, TGs, Facultades/Carreras).
   - Todas las confirmaciones destructivas ahora utilizan una elegante ventana modal centrada renderizada de forma condicional, con notificaciones asíncronas en línea de éxito (verdes) y error (rojas), utilizando componentes de Tailwind.
+- **Validación Estricta de Invitaciones por Tipo de TG**:
+  - El botón de "Invitar Integrante" en el Dashboard del Egresado ahora evalúa en tiempo real la selección de "¿Qué tipo de trabajo realizarás?".
+  - Solo permite invitar compañeros (habilita el botón) si la modalidad seleccionada es "Proyecto de Graduación".
+  - Si el usuario selecciona "Pasantía" o "Trabajo de Investigación (Tesis)", el botón se bloquea instantáneamente, tornándose gris con cursor de no-permitido, y muestra el texto explicativo: *"Solo válido para Proyecto de Graduación"*.
