@@ -22,3 +22,29 @@ export async function DELETE(req: Request, props: { params: Promise<{ id: string
     return NextResponse.json({ error: 'Error al eliminar la carrera' }, { status: 500 });
   }
 }
+
+export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  try {
+    const session = await auth();
+    if (!session || (session?.user as any)?.role !== 'administrador') return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
+    const body = await req.json();
+    const { nombre, codigo } = body;
+
+    if (!nombre || !codigo) return NextResponse.json({ error: 'Nombre y código son requeridos' }, { status: 400 });
+
+    const result = await sql`
+      UPDATE sistema_tg.carreras 
+      SET nombre = ${nombre}, codigo = ${codigo}
+      WHERE id = ${params.id}
+      RETURNING *
+    `;
+
+    if (result.length === 0) return NextResponse.json({ error: 'Carrera no encontrada' }, { status: 404 });
+
+    return NextResponse.json({ success: true, carrera: result[0] });
+  } catch (error: any) {
+    return NextResponse.json({ error: 'Error al actualizar la carrera' }, { status: 500 });
+  }
+}

@@ -12,9 +12,10 @@ export async function GET() {
     }
 
     const facultades = await sql`
-      SELECT id, nombre, codigo, activa, fecha_creacion
-      FROM sistema_tg.facultades
-      ORDER BY id ASC
+      SELECT f.id, f.nombre, f.codigo, f.activa, f.fecha_creacion,
+             (SELECT COUNT(*) FROM sistema_tg.carreras c WHERE c.facultad_id = f.id) as num_carreras
+      FROM sistema_tg.facultades f
+      ORDER BY f.id ASC
     `;
 
     return NextResponse.json({ facultades });

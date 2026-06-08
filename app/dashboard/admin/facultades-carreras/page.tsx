@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Building, BookOpen, Plus, Loader2, AlertCircle, Trash2 } from 'lucide-react';
+import { Building, BookOpen, Plus, Loader2, AlertCircle, Trash2, Edit3 } from 'lucide-react';
 
-type Facultad = { id: number; nombre: string; codigo: string; activa: boolean };
-type Carrera = { id: number; nombre: string; codigo: string; facultad_id: number; facultad_nombre?: string; activa: boolean };
+type Facultad = { id: number; nombre: string; codigo: string; activa: boolean; num_carreras?: number };
+type Carrera = { id: number; nombre: string; codigo: string; facultad_id: number; facultad_nombre?: string; activa: boolean; num_usuarios?: number };
 
 export default function FacultadesCarrerasPage() {
   const [facultades, setFacultades] = useState<Facultad[]>([]);
@@ -131,6 +131,44 @@ export default function FacultadesCarrerasPage() {
     }
   };
 
+  const handleEditFacultad = async (fac: Facultad) => {
+    const nuevoNombre = prompt('Editar Nombre de Facultad:', fac.nombre);
+    if (nuevoNombre === null) return;
+    const nuevoCodigo = prompt('Editar Código de Facultad:', fac.codigo);
+    if (nuevoCodigo === null) return;
+
+    try {
+      const res = await fetch(`/api/admin/facultades/${fac.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: nuevoNombre || fac.nombre, codigo: nuevoCodigo || fac.codigo })
+      });
+      if (res.ok) fetchData();
+      else alert('Error al editar');
+    } catch (err) {
+      alert('Error de conexión');
+    }
+  };
+
+  const handleEditCarrera = async (car: Carrera) => {
+    const nuevoNombre = prompt('Editar Nombre de Carrera:', car.nombre);
+    if (nuevoNombre === null) return;
+    const nuevoCodigo = prompt('Editar Código de Carrera:', car.codigo);
+    if (nuevoCodigo === null) return;
+
+    try {
+      const res = await fetch(`/api/admin/carreras/${car.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: nuevoNombre || car.nombre, codigo: nuevoCodigo || car.codigo })
+      });
+      if (res.ok) fetchData();
+      else alert('Error al editar');
+    } catch (err) {
+      alert('Error de conexión');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -198,6 +236,7 @@ export default function FacultadesCarrerasPage() {
                     <th className="px-4 py-3">Código</th>
                     <th className="px-4 py-3">Nombre</th>
                     <th className="px-4 py-3 text-center">Estado</th>
+                    <th className="px-4 py-3 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -211,6 +250,25 @@ export default function FacultadesCarrerasPage() {
                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${fac.activa ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                           {fac.activa ? 'ACTIVO' : 'INACTIVO'}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button 
+                            onClick={() => handleEditFacultad(fac)}
+                            className="text-gray-400 hover:text-blue-600 transition-colors"
+                            title="Editar"
+                          >
+                            <Edit3 size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteFacultad(fac.id)}
+                            disabled={(fac.num_carreras || 0) > 0 || (deletingId?.tipo === 'facultad' && deletingId.id === fac.id)}
+                            className={`transition-colors ${(fac.num_carreras || 0) > 0 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-red-600'}`}
+                            title={(fac.num_carreras || 0) > 0 ? "No se puede eliminar (tiene carreras)" : "Eliminar"}
+                          >
+                            {deletingId?.tipo === 'facultad' && deletingId.id === fac.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -276,6 +334,7 @@ export default function FacultadesCarrerasPage() {
                     <th className="px-4 py-3">Código</th>
                     <th className="px-4 py-3">Carrera y Facultad</th>
                     <th className="px-4 py-3 text-center">Estado</th>
+                    <th className="px-4 py-3 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -292,6 +351,25 @@ export default function FacultadesCarrerasPage() {
                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${car.activa ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                           {car.activa ? 'ACTIVO' : 'INACTIVO'}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button 
+                            onClick={() => handleEditCarrera(car)}
+                            className="text-gray-400 hover:text-blue-600 transition-colors"
+                            title="Editar"
+                          >
+                            <Edit3 size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteCarrera(car.id)}
+                            disabled={(car.num_usuarios || 0) > 0 || (deletingId?.tipo === 'carrera' && deletingId.id === car.id)}
+                            className={`transition-colors ${(car.num_usuarios || 0) > 0 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-red-600'}`}
+                            title={(car.num_usuarios || 0) > 0 ? "No se puede eliminar (tiene estudiantes)" : "Eliminar"}
+                          >
+                            {deletingId?.tipo === 'carrera' && deletingId.id === car.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

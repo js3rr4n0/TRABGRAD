@@ -12,7 +12,8 @@ export async function GET() {
     }
 
     const carreras = await sql`
-      SELECT c.id, c.nombre, c.codigo, c.activa, c.fecha_creacion, c.facultad_id, f.nombre as facultad_nombre
+      SELECT c.id, c.nombre, c.codigo, c.activa, c.fecha_creacion, c.facultad_id, f.nombre as facultad_nombre,
+             (SELECT COUNT(*) FROM sistema_tg.usuarios u WHERE u.carrera_id = c.id) as num_usuarios
       FROM sistema_tg.carreras c
       LEFT JOIN sistema_tg.facultades f ON c.facultad_id = f.id
       ORDER BY c.id ASC
